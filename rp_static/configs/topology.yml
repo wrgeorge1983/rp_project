@@ -1,0 +1,5 @@
+---
+networks:
+  netA:
+    - R1
+    - R2

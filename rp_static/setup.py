@@ -5,7 +5,8 @@ setup(
     packages=['rp_static'],
     include_package_data=True,
     install_requires=[
-        'requests'
+        'requests',
+        'click'
     ],
     entry_points={
         'console_scripts': [

@@ -6,7 +6,7 @@ services:
     networks:
       - rp_network
     environment:
-      config_name: r1.config
+      RP_CONFIG_FILE: r1.config.yml
     volumes:
       - configs:/usr/src/app/configs
   r2:
@@ -14,7 +14,7 @@ services:
     networks:
       - rp_network
     environment:
-      config_name: r2 .config
+      RP_CONFIG_FILE: r2.config.yml
     volumes:
       - configs:/usr/src/app/configs
   rmq:
