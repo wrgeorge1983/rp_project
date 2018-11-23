@@ -148,5 +148,58 @@ def rmq_recv(state):
     channel.start_consuming()
 
 
+@rmq.command(name='pub')
+@common_options
+@click.option('-m', 'msg', default='Hello World!!!')
+@pass_state
+def rmq_pub(state, msg):
+    if state.debug:
+        log.setLevel(logging.DEBUG)
+
+    config = get_configs(state.config_file, state.topology_file)
+
+    channel, connection = get_mq_channel(config)
+
+    channel.exchange_declare(exchange='logs',
+                             exchange_type='fanout')
+
+    channel.basic_publish(exchange='logs',
+                          routing_key='',
+                          body=msg)
+
+    log.info(f'Sent "{msg}"')
+    connection.close()
+
+
+
+@rmq.command(name='sub')
+@common_options
+@pass_state
+def rmq_sub(state):
+    if state.debug:
+        log.setLevel(logging.DEBUG)
+
+    config = get_configs(state.config_file, state.topology_file)
+
+    channel, _ = get_mq_channel(config)
+
+    queue = channel.queue_declare(exclusive=True)
+    queue_name = queue.method.queue
+
+    log.debug(f'binding queue: {queue_name}')
+
+    channel.queue_bind(exchange='logs',
+                       queue=queue_name)
+
+    def queue_callback(ch, method, properties, body):
+        log.info(f'Received {body.decode()}')
+
+    channel.basic_consume(queue_callback,
+                          queue=queue_name,
+                          no_ack=True)
+
+    log.info('Waiting for messages forever.  To exit press CTRL-C')
+    channel.start_consuming()
+
 
 
