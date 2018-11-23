@@ -13,22 +13,38 @@ def get_logger():
 log = get_logger()
 
 
-@click.command()
-@click.argument('config_file',
-                envvar='RP_CONFIG_FILE',
-                required=True,
-                type=click.File('r'))
-@click.argument('topology_file',
-                envvar='RP_TOPOLOGY_FILE',
-                required=True,
-                type=click.File('r'))
-def main(config_file, topology_file):
+def get_configs(config_file, topology_file):
     log.info(f'Using config file: {config_file.name}')
     log.info(f'Using topology file: {topology_file.name}')
     config = yaml.load(config_file)
     topology = yaml.load(topology_file)
-    log.info(f'Got config: {config}')
-    log.info(f'Got topology: {topology}')
+    log.debug(f'Got config: \n{yaml.dump(config)}')
+    log.debug(f'Got topology: \n{yaml.dump(topology)}')
+    return {
+        'router_config': config,
+        'topology': topology
+    }
+
+
+@click.command()
+@click.option('-c', 'config_file',
+                envvar='RP_CONFIG_FILE',
+                required=True,
+                type=click.File('r'))
+@click.option('-t', 'topology_file',
+                envvar='RP_TOPOLOGY_FILE',
+                required=True,
+                type=click.File('r'))
+@click.option('--debug', 'debug',
+                envvar='RP_DEBUG',
+                default=False,
+                is_flag=True)
+def main(config_file, topology_file, debug):
+    if debug:
+        log.setLevel(logging.DEBUG)
+
+    config = get_configs(config_file, topology_file)
+
 
 
 
