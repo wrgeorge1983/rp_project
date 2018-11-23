@@ -172,7 +172,6 @@ def rmq_pub(state, msg):
     connection.close()
 
 
-
 @rmq.command(name='sub')
 @common_options
 @pass_state
