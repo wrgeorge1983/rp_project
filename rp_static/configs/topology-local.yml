@@ -1,0 +1,9 @@
+---
+message_transport:
+  type: rabbitmq
+  hostname: 178.128.192.22
+
+networks:
+  netA:
+    - R1
+    - R2

@@ -1,5 +1,10 @@
 version: '3'
 
+services:
+  rmq:
+    ports:
+      - "5672:5672"
+
 volumes:
   configs:
     driver: local

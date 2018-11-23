@@ -9,6 +9,7 @@ verify_ssl = true
 rp-static = {editable = true,path = "."}
 click = "*"
 pyyaml = "*"
+pika = "*"
 
 [requires]
 python_version = "3.6"

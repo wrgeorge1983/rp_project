@@ -10,7 +10,8 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'rp_static = rp_static.__main__:main'
+            'rp_static = rp_static.__main__:main',
+            'rp_rmq = rp_static.__main__:rmq'
         ]
     }
 )
