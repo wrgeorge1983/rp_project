@@ -1,4 +1,8 @@
 ---
+message_transport:
+  type: rabbitmq
+  hostname: rmq
+
 networks:
   netA:
     - R1

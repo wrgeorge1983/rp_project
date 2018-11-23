@@ -6,7 +6,9 @@ services:
     networks:
       - rp_network
     environment:
-      RP_CONFIG_FILE: r1.config.yml
+      RP_DEBUG: "true"
+      RP_TOPOLOGY_FILE: configs/topology.yml
+      RP_CONFIG_FILE: configs/r1.config.yml
     volumes:
       - configs:/usr/src/app/configs
   r2:
@@ -14,7 +16,9 @@ services:
     networks:
       - rp_network
     environment:
-      RP_CONFIG_FILE: r2.config.yml
+      RP_DEBUG: "true"
+      RP_TOPOLOGY_FILE: configs/topology.yml
+      RP_CONFIG_FILE: configs/r2.config.yml
     volumes:
       - configs:/usr/src/app/configs
   rmq:
