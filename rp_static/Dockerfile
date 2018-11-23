@@ -1,10 +1,14 @@
-FROM python:3.7
+FROM python:3.6
+
+
+RUN pip install --upgrade pipenv
+
 
 WORKDIR /usr/src/app
 
-COPY requirements.txt /usr/src/app
-RUN pip install --upgrade -r ./requirements.txt
+COPY . .
+RUN pipenv install
 
-COPY . /usr/src/app
+#COPY . /usr/src/app
 
-CMD ["python", "cli.py"]
+CMD ["pipenv", "run", "rp_static"]
