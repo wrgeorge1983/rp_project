@@ -110,20 +110,21 @@ def rmq():
 @rmq.command(name='send')
 @common_options
 @click.option('-m', 'msg', default='Hello World!!!')
+@click.option('-q', 'queue', default='hello')
 @pass_state
-def rmq_send(state, msg):
+def rmq_send(state, msg, queue):
     if state.debug:
         log.setLevel(logging.DEBUG)
 
     config = get_configs(state.config_file, state.topology_file)
 
     channel, connection = get_mq_channel(config)
-    channel.queue_declare(queue='hello')
+    channel.queue_declare(queue=queue)
     # msg = 'Hello World!!!'
     channel.basic_publish(exchange='',
-                          routing_key='hello',
+                          routing_key=queue,
                           body=msg)
-    log.info(f'Sent "{msg}"')
+    log.info(f'Sent "{msg}" to queue "{queue}')
     connection.close()
 
 
