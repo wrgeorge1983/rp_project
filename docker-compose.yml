@@ -7,6 +7,7 @@ services:
       - rp_network
     environment:
       RP_DEBUG: "true"
+      RP_LOG_CONFIG: configs/loggingconf.yml
       RP_TOPOLOGY_FILE: configs/topology.yml
       RP_CONFIG_FILE: configs/r1.config.yml
     volumes:
@@ -17,6 +18,7 @@ services:
       - rp_network
     environment:
       RP_DEBUG: "true"
+      RP_LOG_CONFIG: configs/loggingconf.yml
       RP_TOPOLOGY_FILE: configs/topology.yml
       RP_CONFIG_FILE: configs/r2.config.yml
     volumes:

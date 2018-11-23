@@ -5,28 +5,9 @@ import logging
 import yaml
 import pika
 
+from rp_static.utils import get_configs
 
-def get_logger():
-    # sh = logging.StreamHandler()
-    logger = logging.getLogger(__name__)
-    # logger.addHandler(sh)
-    # logger.setLevel(logging.INFO)
-    return logger
-
-log = get_logger()
-
-
-def get_configs(config_file, topology_file):
-    log.info(f'Using config file: {config_file.name}')
-    log.info(f'Using topology file: {topology_file.name}')
-    config = yaml.load(config_file)
-    topology = yaml.load(topology_file)
-    log.debug(f'Got config: \n{yaml.dump(config)}')
-    log.debug(f'Got topology: \n{yaml.dump(topology)}')
-    return {
-        'router_config': config,
-        'topology': topology
-    }
+log = logging.getLogger(__name__)
 
 
 def get_mq_channel(config):
@@ -43,8 +24,6 @@ def get_mq_channel(config):
 
 
 def rmq_send(state, msg, queue):
-    if state.debug:
-        log.setLevel(logging.DEBUG)
 
     config = get_configs(state.config_file, state.topology_file)
 
@@ -59,9 +38,6 @@ def rmq_send(state, msg, queue):
 
 
 def rmq_recv(state):
-    if state.debug:
-        log.setLevel(logging.DEBUG)
-
     config = get_configs(state.config_file, state.topology_file)
 
     channel, _ = get_mq_channel(config)
@@ -78,9 +54,6 @@ def rmq_recv(state):
 
 
 def rmq_pub(state, msg):
-    if state.debug:
-        log.setLevel(logging.DEBUG)
-
     config = get_configs(state.config_file, state.topology_file)
 
     channel, connection = get_mq_channel(config)
@@ -96,9 +69,6 @@ def rmq_pub(state, msg):
 
 
 def rmq_sub(state):
-    if state.debug:
-        log.setLevel(logging.DEBUG)
-
     config = get_configs(state.config_file, state.topology_file)
 
     channel, _ = get_mq_channel(config)
