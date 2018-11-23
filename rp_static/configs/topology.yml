@@ -3,7 +3,23 @@ message_transport:
   type: rabbitmq
   hostname: rmq
 
-networks:
-  netA:
-    - R1
-    - R2
+R1:
+  interfaces:
+    E0: NetA
+    E2: BusA
+
+R2:
+  interfaces:
+    E0: NetA
+    E1: BusA
+    E2: NetC
+    E3: NetD
+
+R3:
+  interfaces:
+    E0: BusA
+    E1: NetC
+
+R4:
+  interfaces:
+    E0: NetD

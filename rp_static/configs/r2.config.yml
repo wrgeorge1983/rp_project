@@ -1,5 +1,15 @@
 ---
 hostname: R2
-stuff:
- - 3
- - 4
+
+
+protocols:
+  rip:
+    interfaces:
+      - E0
+      - E1
+
+interfaces:
+  E0:
+    ipaddr: 1.1.1.1/30
+  E1:
+    ipaddr: 10.0.0.1/30

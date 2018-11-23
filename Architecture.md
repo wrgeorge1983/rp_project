@@ -1,4 +1,8 @@
 
+# NEXT TO IMPLEMENT IS 
+* Topology_config parser as shown in [architecture 2 diagram](https://www.lucidchart.com/invitations/accept/37285e1d-19e9-4124-bea7-70b43f01e268)
+
+
 # architecture
 ### what are we building?  What are we building it with?
 * RIPv2 in the abstract
