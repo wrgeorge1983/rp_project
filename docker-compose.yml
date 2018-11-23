@@ -29,3 +29,8 @@ networks:
   rp_network:
 volumes:
   configs:
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: 'rp_static/configs'

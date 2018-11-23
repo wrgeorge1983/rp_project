@@ -1,0 +1,9 @@
+version: '3'
+
+volumes:
+  configs:
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: '/root/rp_project/rp_static/configs'
