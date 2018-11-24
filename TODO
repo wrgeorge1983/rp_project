@@ -1,0 +1,72 @@
+# CTRL-Enter to toggle box
+# ALT-S to start
+# ALT-D to Done
+# ALT-C to Cancel
+# CTRL-SHIFT-A to archive all cancelled/done items
+Deployment Workflow:
+  ☐ topology_config parser more work
+  ☐ null
+
+Core Functionality - Logical Forwarding Plane:
+  ☐ FIB (all still north of the 
+    ☐ Address -> egress_interface
+
+Core Functionality - Transport Forwarding Plane:
+  ☐ Configure Transports
+  
+Core Functionality - Transport Forwarding Plane - RabbitMQ:
+  ☐ Select transport instances
+
+Core Functionality - Control Plane Layer 3/4:
+  ☐ egress_interface -> header fields 
+  ☐ just enough tcp/udp to model a connection (2 unidirectional flows)
+    ☐ random_high ports for tcp/udp
+    ☐ connection state tracking
+      ☐ New sessions outbound
+      ☐ New sessions inbound
+  ☐ just enough IP to keep track of source/dest addresses, etc.
+    ☐ unicast
+    ☐ broadcast
+    ☐ multicast
+
+Core Functionality - Control Plane:
+  ☐ RIB (Routing Information Base - nodes understanding of how to get places)
+    ☐ RIB-Manager
+      ☐ Intelligently dedupe events, handle null-ops sanely
+      ☐ Manage pool of candidate routes
+        ☐ Accept routes into pool (on event from protocols)
+        ☐ Remove routes from pool (on event from protocols)
+        ☐ Select routes for admission to RIB 
+          ☐ admin distance
+          ☐ filter on interface status (maybe?  probably?)
+      ☐ Manage RIB itself
+        ☐ Add selected routes
+        ☐ rescind de-selected routes
+    ☐ Lookups
+    
+Core Functionality - Protocols - STATIC:
+  ☐ Add routes from config
+  ☐ rescind routes via config (maybe?)
+  ☐ Handle connected routes
+
+Core Functionality - Protocols - RIP: 
+  ☐ RIPv2
+  ☐ RIPv1 ????
+
+Core Functionality - Management Plane:
+  First iteration is the deployment workflow
+  Further iteration is low priority until lack of mgmt plane is painful
+  ☐ REST API
+    ☐ http?
+    ☐ via message bus?  maybe? 
+  ☐ CLI dependant upon REST API
+  ☐ null
+
+Archive:
+  ✔ topology_config parser first pass @done(18-11-24 17:49) @project(Deployment Workflow)
+  ✔ Create transport instance class @done(18-11-24 14:53) @project(Core Functionality - Transport Forwarding Plane - RabbitMQ)
+  ✔ Migrate test RMQ functions to use TransportInstance class @done(18-11-24 17:47) @project(Core Functionality - Transport Forwarding Plane - RabbitMQ)
+  ✔ use enough of the configuration to define which instances get created @done(18-11-24 17:47) @project(Core Functionality - Transport Forwarding Plane - RabbitMQ)
+  ✔ Add concept of networks to test rmq functions @done(18-11-24 17:47) @project(Core Functionality - Transport Forwarding Plane - RabbitMQ)
+  ✘ include sane / consistent defaults @cancelled(18-11-24 17:48) @project(Core Functionality - Transport Forwarding Plane - RabbitMQ)
+  ✔ map logical interfaces to exchanges @done(18-11-24 17:48) @project(Core Functionality - Transport Forwarding Plane - RabbitMQ)

@@ -6,6 +6,7 @@ message_transport:
 R1:
   interfaces:
     E0: NetA
+    E1: NetA
     E2: BusA
 
 R2:

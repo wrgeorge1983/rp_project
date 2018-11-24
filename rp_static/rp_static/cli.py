@@ -74,6 +74,7 @@ def topo_file_option(f):
 
 
 def common_options(f):
+    # f = debug_option(config_file_option(topo_file_option(log_debug(f))))
     f = debug_option(f)
     f = config_file_option(f)
     f = topo_file_option(f)
@@ -101,39 +102,24 @@ def rmq():
     pass
 
 
-@rmq.command(name='send')
-@common_options
-@click.option('-m', 'msg', default='Hello World!!!')
-@click.option('-q', 'queue', default='hello')
-@pass_state
-def rmq_send(state, msg, queue):
-    common_state_ops(state)
-    rmq_transport.rmq_send(state, msg, queue)
-
-
-@rmq.command(name='recv')
-@common_options
-@pass_state
-def rmq_recv(state):
-    common_state_ops(state)
-    rmq_transport.rmq_recv(state)
-
-
 @rmq.command(name='pub')
 @common_options
 @click.option('-m', 'msg', default='Hello World!!!')
+@click.option('-n', 'network_name')
+@click.option('-i', '--interface_name', 'interface_name')
 @pass_state
-def rmq_pub(state, msg):
+def rmq_pub(state, msg, network_name, interface_name):
     common_state_ops(state)
-    rmq_transport.rmq_pub(state, msg)
+    rmq_transport.test_rmq_pub(state, msg, network_name=network_name, interface_name=interface_name)
 
 
 @rmq.command(name='sub')
 @common_options
+@click.option('-i', '--interface_name', 'interface_name')
 @pass_state
-def rmq_sub(state):
+def rmq_sub(state, interface_name):
     common_state_ops(state)
-    rmq_transport.rmq_sub(state)
+    rmq_transport.test_rmq_sub(state, interface_name=interface_name)
 
 
 
