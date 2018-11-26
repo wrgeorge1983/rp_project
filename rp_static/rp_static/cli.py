@@ -7,6 +7,7 @@ import yaml
 
 import rp_static.rmq_transport as rmq_transport
 from rp_static.utils import get_configs
+import rp_static.mock_protocol_1 as mock_protocol_1
 
 
 def setup_logging():
@@ -84,6 +85,8 @@ def common_options(f):
 def common_state_ops(state):
     if state.debug:
         log.parent.setLevel(logging.DEBUG)
+        # logging.getLogger('asyncio').setLevel(logging.DEBUG)
+        logging.getLogger('aio_pika').setLevel(logging.DEBUG)
     if state.log_debug:
         import logging_tree
         logging_tree.printout()
@@ -102,7 +105,7 @@ def rmq():
     pass
 
 
-@rmq.command(name='pub')
+@rmq.command(name='pub_test')
 @common_options
 @click.option('-m', 'msg', default='Hello World!!!')
 @click.option('-n', 'network_name')
@@ -113,7 +116,7 @@ def rmq_pub(state, msg, network_name, interface_name):
     rmq_transport.test_rmq_pub(state, msg, network_name=network_name, interface_name=interface_name)
 
 
-@rmq.command(name='sub')
+@rmq.command(name='sub_test')
 @common_options
 @click.option('-i', '--interface_name', 'interface_name')
 @pass_state
@@ -122,4 +125,38 @@ def rmq_sub(state, interface_name):
     rmq_transport.test_rmq_sub(state, interface_name=interface_name)
 
 
+@click.group(name='mock1')
+def mock1():
+    pass
 
+
+def hostname_option(f):
+    return click.option('-h', '--hostname','hostname',
+                        required=True,
+                        expose_value=False,
+                        callback=option_callback)(f)
+
+
+def mock1_options(f):
+    f = debug_option(f)
+    f = hostname_option(f)
+    f = topo_file_option(f)
+    f = log_debug(f)
+    return f
+
+
+@mock1.command(name='actor')
+@mock1_options
+@click.option('--timeout', 'timeout', default=60)
+@pass_state
+def mock1_actor(state, timeout):
+    common_state_ops(state)
+    mock_protocol_1.start_actor(state, timeout)
+
+
+@mock1.command(name='initiator')
+@mock1_options
+@pass_state
+def mock1_actor(state):
+    common_state_ops(state)
+    print('mock1_initiator')

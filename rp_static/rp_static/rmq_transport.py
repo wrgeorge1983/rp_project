@@ -5,7 +5,7 @@ from typing import List, Type, Dict
 from contextlib import suppress
 
 import yaml
-import pika, pika.exceptions
+import pika, pika.exceptions, pika.channel, pika.adapters.blocking_connection
 
 from rp_static.utils import get_configs
 
@@ -14,7 +14,7 @@ log = logging.getLogger(__name__)
 
 class TransportInstance():
     def __init__(self, rmq_channel, rmq_connection, network_name, logical_interface):
-        self.rmq_channel = rmq_channel
+        self.rmq_channel: pika.adapters.blocking_connection.BlockingChannel = rmq_channel
         self.rmq_connection = rmq_connection
         self.network_name = network_name
         self.exchange_name = f'net_{network_name}'
@@ -157,6 +157,8 @@ def get_mq_channel(config):
     log.info(f'Using {rmq_host} as rabbitMQ host')
 
     connection:pika.BlockingConnection = pika.BlockingConnection(pika.ConnectionParameters(rmq_host))
+    # from pika.channel import Channel
+    # channel:Channel = connection.channel()
     channel = connection.channel()
     return channel, connection
 

@@ -10,8 +10,13 @@ handlers:
     formatter: simple
     stream: ext://sys.stdout
 loggers:
+  asyncio:
+    level: INFO
   rp_static:
     level: INFO
+  aio_pika:
+    level: INFO
+
 root:
   level: DEBUG
   handlers: [console]

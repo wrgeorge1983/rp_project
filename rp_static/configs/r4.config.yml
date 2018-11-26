@@ -1,0 +1,11 @@
+---
+hostname: R4
+
+protocols:
+  rip:
+    interfaces:
+      - E0
+
+interfaces:
+  E0:
+    ipaddr: 1.1.1.1/30
