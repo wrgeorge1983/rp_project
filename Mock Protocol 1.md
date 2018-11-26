@@ -26,11 +26,64 @@
     * monitor and log all queues
     * discard messages received on an interface that were sent from that interface
 * Message format:  
+```yaml
     msg:
         source_host: R1
         egress_interface: E2
         network_segment: BusA
         content: "foo"
+```
+---
+```json
+{
+  "type": "routing_update",
+  "data": {
+    "1.1.1.0/30": 2
+  }
+}
+``` 
+becomes
+```json
+{
+  "source_host": "R1",
+  "egress_interface": "E2",
+  "netowrk_segment": "BusA",
+  "content": {
+    "type": "routing_update",
+    "data": {
+      "1.1.1.1/30": 2
+    }
+  }
+}
+```
+---
+```json
+"reboot now"
+```
+becomes
+```json
+{
+  "source_host": "R1",
+  "egress_interface": "E2",
+  "network_segment": "BusA",
+  "content": "reboot now"
+} 
+```
+---
+```python
+TransportMessage(content='foo', egress_interface='E1')
+```
+becomes
+```json
+{
+  "source_host": "R1",
+  "egress_interface": "E1",
+  "network_segment": "NetA",
+  "content": "foo"
+}
+```
+---
+
 
 ## Milestone 2
 * Actor
