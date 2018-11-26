@@ -67,23 +67,28 @@ class TransportInstance:
         self.network_name = network_name
         self.exchange_name = f'net_{network_name}'
         self.logical_interface = logical_interface
+        self.hostname = hostname
+
+    @property
+    def net_int(self):
+        return f'{self.network_name}:{self.logical_interface}'
 
     async def async_init(self,):
         await self._rmq_init()
 
     async def _rmq_init(self):
-        log.debug(f'entering _rmq_init for {self.network_name}:{self.logical_interface}')
-        log.debug(f'declaring exchange for {self.network_name}:{self.logical_interface}')
+        log.debug(f'entering _rmq_init for {self.net_int}')
+        log.debug(f'declaring exchange for {self.net_int}')
         self.exchange = exchange = await self.rmq_channel.declare_exchange(
             name=self.exchange_name,
             type=aio_pika.ExchangeType.FANOUT
         )
 
-        log.debug(f'declaring queue for {self.network_name}:{self.logical_interface}')
+        log.debug(f'declaring queue for {self.net_int}')
         self.queue = queue = await self.rmq_channel.declare_queue(exclusive=True)
         self.queue_name = queue_name = queue.name
 
-        log.debug(f'binding queue for {self.network_name}:{self.logical_interface}')
+        log.debug(f'binding queue for {self.net_int}')
         await queue.bind(exchange=exchange)
         # await self.rmq_channel.bind_(
         #     exchange=self.exchange_name,
@@ -101,23 +106,13 @@ class TransportInstance:
         # )
 
     def queue_callback(self, message: aio_pika.IncomingMessage):
-        # with message.process():
-        log.info(f'Received {message.body}')
-
-    # def queue_callback(self, ch, method, properties, body):
-    #     log.info(f'Received {body.decode()}')
+        log.info(f'Received {message.body.decode()}')
 
     async def _sub(self):
-        def _queue_callback(*args, **kwargs):
-            self.queue_callback(*args, **kwargs)
+        log.info(f'Waiting for messages forever on {self.net_int}.  To exit press CTRL-C???')
+        await self._sub_w_callback(self.queue_callback)
 
-        # await self.rmq_channel.basic_consume(
-        #     _queue_callback,
-        #     queue=self.queue_name,
-        #     no_ack=True
-        # )
-
-        log.info(f'Waiting for messages forever on {self.network_name}:{self.logical_interface}.  To exit press CTRL-C???')
+    async def _sub_w_callback(self, callback):
         await self.queue.consume(
             callback=_queue_callback,
             no_ack=True,
@@ -137,8 +132,7 @@ class TransportInstance:
         been closed.
         :return:
         """
-        # with suppress()
-        log.debug(f'Shutting down TransportInstance for {self.network_name}:{self.logical_interface}')
+        log.debug(f'Shutting down TransportInstance for {self.net_int}')
         log.debug(f'Closing RabbitMQ channel')
 
         with suppress(aio_pika.exceptions.ChannelClosed):
@@ -156,9 +150,9 @@ class TransportInstanceCollection:
         if not isinstance(instance, TransportInstance):
             raise ValueError(f'TransportInstanceManager can only managed TransportInstances, not {type(instance)}s!')
         if instance in self._instances or instance.logical_interface in self._instances_by_interfaces:
-            raise ValueError(f'Can\'t add instance for {instance.network_name}:{instance.logical_interface} '
+            raise ValueError(f'Can\'t add instance for {instance.net_int} '
                              f'to TransportInstanceCollection because it already exists.' )
-        log.debug(f'Adding instance for {instance.network_name}:{instance.logical_interface} to TransportInstanceCollection')
+        log.debug(f'Adding instance for {instance.net_int} to TransportInstanceCollection')
         self._instances_by_interfaces[instance.logical_interface] = instance
         self._instances.append(instance)
 
@@ -229,7 +223,8 @@ async def config_instances_from_state(state, loop):
             logical_interface=interface,
             network_name=network_name,
             rmq_channel=channel,
-            rmq_connection=connection
+            rmq_connection=connection,
+            hostname=hostname
         )
         await instance.async_init()
         log.debug('completed async_init()')
