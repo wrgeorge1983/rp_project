@@ -171,8 +171,15 @@ def mock1_actor(state, timeout):
 @mock1_options
 @click.option('--timeout', 'timeout', default=60)
 @click.option('-m', '--message', 'msg', default='HELLO')
-@click.option('-i', '--interface_name', 'interface_name', default=None)
+@click.option('-i', '--interface-name', 'interface_name', default=None)
+@click.option('-d', '--dict-input', is_flag=True, default=False)
 @pass_state
-def mock1_initiator(state, msg, timeout, interface_name):
+def mock1_initiator(state, msg, timeout, interface_name, dict_input):
     common_state_ops(state)
+    if dict_input:
+        msg = {
+            'data': {
+                'msg': msg
+            }
+        }
     mock_protocol_1.start_initiator(state, msg, timeout, interface_name)

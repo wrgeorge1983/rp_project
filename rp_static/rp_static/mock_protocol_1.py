@@ -1,13 +1,14 @@
 """mock_protocol_1.py
 defines Mock Protocol 1.0"""
 import logging
+import json
 from typing import List, Type, Dict, Union
 from contextlib import suppress
+from functools import partial
 import asyncio
 
 import yaml
 import aio_pika, aio_pika.exceptions
-# import pika, pika.exceptions
 
 from rp_static.utils import get_configs
 
@@ -60,8 +61,34 @@ class LoopExceptionHandler:
         self.loop.set_exception_handler(self.loop.default_exception_handler)
 
 
+class TransportMessage:
+    _serializable_attributes = [
+        'content',
+        'source_host',
+        'egress_interface',
+        'ingress_interface',
+        'network_segment'
+    ]
+
+    def __init__(self, content, source_host=None, egress_interface=None, network_segment=None):
+        self.content = content
+        self.source_host = source_host
+        self.egress_interface = egress_interface
+        self.ingress_interface = None
+        self.network_segment = network_segment
+
+    @property
+    def as_json(self) -> str:
+        r_dict = {key: val for key, val in self.__dict__.items()
+                  if (key in self._serializable_attributes and val is not None)}
+        return json.dumps(r_dict)
+
+    def __str__(self):
+        return self.as_json
+
+
 class TransportInstance:
-    def __init__(self, rmq_channel, rmq_connection, network_name, logical_interface):
+    def __init__(self, rmq_channel, rmq_connection, network_name, logical_interface, hostname):
         self.rmq_channel:aio_pika.Channel = rmq_channel
         self.rmq_connection = rmq_connection
         self.network_name = network_name
@@ -90,41 +117,61 @@ class TransportInstance:
 
         log.debug(f'binding queue for {self.net_int}')
         await queue.bind(exchange=exchange)
-        # await self.rmq_channel.bind_(
-        #     exchange=self.exchange_name,
-        #     queue = queue_name
-        # )
 
-    async def _pub(self, msg):
-        log.debug(f'publishing message {msg} on {self.network_name}:{self.logical_interface}')
-        message = aio_pika.Message(body=msg)
+    async def _pub(self, msg:TransportMessage):
+        log.debug(f'publishing message {msg} on {self.net_int}')
+        m_body = msg.as_json.encode()
+        message = aio_pika.Message(body=m_body)
         await self.exchange.publish(message,routing_key='')
-        # await self.rmq_channel.basic_publish(
-        #     exchange=self.exchange_name,
-        #     routing_key='',
-        #     body=msg
-        # )
 
-    def queue_callback(self, message: aio_pika.IncomingMessage):
+    @staticmethod
+    def queue_callback(message: aio_pika.IncomingMessage, *args, **kwargs):
         log.info(f'Received {message.body.decode()}')
 
-    async def _sub(self):
-        log.info(f'Waiting for messages forever on {self.net_int}.  To exit press CTRL-C???')
-        await self._sub_w_callback(self.queue_callback)
-
     async def _sub_w_callback(self, callback):
+        log.debug(f'Beginning to consume for {self.net_int}')
         await self.queue.consume(
-            callback=_queue_callback,
+            callback=callback,
             no_ack=True,
         )
-        log.info(f'Done consuming on {self.network_name}:{self.logical_interface}')
-        # await self.rmq_channel.start_consuming()
+        log.info(f'started consuming on {self.net_int}')
 
-    async def send(self, msg):
-        await self._pub(msg)
+    def egress_format_message(self, msg: Union[str, dict, TransportMessage]) -> TransportMessage:
+        if isinstance(msg, TransportMessage):
+            pub_message = msg
+        elif isinstance(msg, (dict, str)):
+            pub_message = TransportMessage(content=msg)
+        else:
+            raise NotImplementedError(f'send() only works on types str, TransportMessage, or dict.  Not {type(msg)}')
 
-    async def recv(self):
-        await self._sub()
+        pub_message.egress_interface = self.logical_interface
+        pub_message.source_host = self.hostname
+        pub_message.network_segment = self.network_name
+        return pub_message
+
+    def ingress_format_message(self, i_msg: aio_pika.IncomingMessage) -> Union[TransportMessage, None]:
+        m_body = json.loads(i_msg.body)
+        msg = TransportMessage(**m_body)
+        if msg.egress_interface == self.logical_interface:
+            return
+        msg.ingress_interface = self.logical_interface
+        return msg
+
+    async def send(self, msg:Union[str, TransportMessage, dict]):
+        pub_message = self.egress_format_message(msg)
+        await self._pub(pub_message)
+
+    async def recv_w_callback(self, callback=None):
+        if callback is None:
+            log.debug('None callback used')
+            callback = self.queue_callback
+
+        def _callback(message):
+            message = self.ingress_format_message(message)
+            if message is not None:
+                callback(message)
+
+        await self._sub_w_callback(_callback)
 
     async def close(self):
         """
@@ -266,6 +313,10 @@ async def _timeout(n, loop):
     loop.stop()
 
 
+def actor_message_handler(msg:TransportMessage):  # could be protocol entry point?
+    log.info(f'ACTOR RECEIVED MESSAGE {msg.__dict__}')
+
+
 def start_actor(state, timeout):
 
     log.debug('entering start_actor()')
@@ -280,7 +331,7 @@ def start_actor(state, timeout):
     log.debug('instances configured, creating receive tasks')
 
     for instance in transport_instances:
-        loop.create_task(instance.recv())
+        loop.create_task(instance.recv_w_callback(actor_message_handler))
     log.debug('receive tasks created')
 
     if timeout:
@@ -315,7 +366,7 @@ def start_initiator(state, msg: str, timeout, interface):
         ]
 
     for instance in instances:
-        loop.create_task(instance.send(msg.encode()))
+        loop.create_task(instance.send(msg))
 
     log.debug('receive tasks created')
 

@@ -23,7 +23,7 @@
         * specified interface
     * can share identity with one Actor without issue
 * Actor
-    * monitor and log all queues
+    * monitor and log all queues associated with this router identity
     * discard messages received on an interface that were sent from that interface
 * Message format:  
 ```yaml

@@ -8,19 +8,11 @@ Deployment Workflow:
   ☐ null
 
 Test Functionality - Mock Protocool:
-  ☐ Milestone 1
-    ✔ CLI hooks @done(18-11-26 11:47)
-    ✔ re-implement rmq_transport based on `aio_pika` @done(18-11-26 11:47)
-    ✔ initiator @done(18-11-26 15:51)
-    ☐ actor
-      ✔ Monitor and log @done(18-11-26 15:52)
-      ☐ discard messages from this interface
   ☐ Milestone 2
   ☐ Milestone 3
     ☐ Rebase `rmq_transport` on async implementation of `TransportInstance`
       ☐ test on 3.7?
   ☐ 1.0 Spec complete
-
 
 Core Functionality - Logical Forwarding Plane:
   ☐ FIB
@@ -79,6 +71,13 @@ Core Functionality - Management Plane:
   ☐ null
 
 Archive:
+  ✔ Milestone 1 @done(18-11-26 18:39) @project(Test Functionality - Mock Protocool)
+  ✔ CLI hooks @done(18-11-26 11:47) @project(Test Functionality - Mock Protocool)
+  ✔ re-implement rmq_transport based on `aio_pika` @done(18-11-26 11:47) @project(Test Functionality - Mock Protocool)
+  ✔ initiator @done(18-11-26 15:51) @project(Test Functionality - Mock Protocool)
+  ✔ actor @done(18-11-26 18:39) @project(Test Functionality - Mock Protocool)
+  ✔ Monitor and log @done(18-11-26 15:52) @project(Test Functionality - Mock Protocool)
+  ✔ discard messages from this interface @done(18-11-26 18:34) @project(Test Functionality - Mock Protocool)
   ✔ topology_config parser first pass @done(18-11-24 17:49) @project(Deployment Workflow)
   ✔ Create transport instance class @done(18-11-24 14:53) @project(Core Functionality - Transport Forwarding Plane - RabbitMQ)
   ✔ Migrate test RMQ functions to use TransportInstance class @done(18-11-24 17:47) @project(Core Functionality - Transport Forwarding Plane - RabbitMQ)
