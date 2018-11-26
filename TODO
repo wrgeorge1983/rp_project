@@ -7,14 +7,26 @@ Deployment Workflow:
   ☐ topology_config parser more work
   ☐ null
 
+Test Functionality - Mock Protocool:
+  ☐ Milestone 1
+    ☐ CLI hooks
+    ☐ re-implement rmq_transport based on `aio_pika`
+  ☐ Milestone 2
+  ☐ Milestone 3
+    ☐ Rebase `rmq_transport` on async implementation of `TransportInstance`
+      ☐ test on 3.7?
+  ☐ 1.0 Spec complete
+
+
 Core Functionality - Logical Forwarding Plane:
-  ☐ FIB (all still north of the 
+  ☐ FIB
     ☐ Address -> egress_interface
 
 Core Functionality - Transport Forwarding Plane:
   ☐ Configure Transports
   
 Core Functionality - Transport Forwarding Plane - RabbitMQ:
+  ☐ Initial usage of asyncio
   ☐ Select transport instances
 
 Core Functionality - Control Plane Layer 3/4:
@@ -26,7 +38,7 @@ Core Functionality - Control Plane Layer 3/4:
       ☐ New sessions inbound
   ☐ just enough IP to keep track of source/dest addresses, etc.
     ☐ unicast
-    ☐ broadcast
+    ☐ broadcastTOD
     ☐ multicast
 
 Core Functionality - Control Plane:
