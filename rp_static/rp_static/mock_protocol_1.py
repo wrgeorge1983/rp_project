@@ -91,8 +91,9 @@ class TransportInstance:
         # )
 
     async def _pub(self, msg):
+        log.debug(f'publishing message {msg} on {self.network_name}:{self.logical_interface}')
         message = aio_pika.Message(body=msg)
-        await self.exchange.publish(message)
+        await self.exchange.publish(message,routing_key='')
         # await self.rmq_channel.basic_publish(
         #     exchange=self.exchange_name,
         #     routing_key='',
@@ -274,7 +275,7 @@ def start_actor(state, timeout):
 
     log.debug('entering start_actor()')
     loop = asyncio.get_event_loop()
-    if state.debug:
+    if state.ext_debug:
         loop.set_debug(enabled=True)
 
     log.debug('event loop created, configuring instances')
@@ -297,11 +298,11 @@ def start_actor(state, timeout):
         log.debug('running ceased')
 
 
-def start_initiator(state, msg, timeout):
+def start_initiator(state, msg: str, timeout):
 
     log.debug('entering start_actor()')
     loop = asyncio.get_event_loop()
-    if state.debug:
+    if state.ext_debug:
         loop.set_debug(enabled=True)
 
     log.debug('event loop created, configuring instances')
@@ -311,7 +312,7 @@ def start_initiator(state, msg, timeout):
     log.debug('instances configured, creating receive tasks')
 
     for instance in transport_instances:
-        loop.create_task(instance.send(msg))
+        loop.create_task(instance.send(msg.encode()))
         # loop.create_task(instance.recv())
     log.debug('receive tasks created')
 

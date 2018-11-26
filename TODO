@@ -9,8 +9,8 @@ Deployment Workflow:
 
 Test Functionality - Mock Protocool:
   ☐ Milestone 1
-    ☐ CLI hooks
-    ☐ re-implement rmq_transport based on `aio_pika`
+    ✔ CLI hooks @done(18-11-26 11:47)
+    ✔ re-implement rmq_transport based on `aio_pika` @done(18-11-26 11:47)
   ☐ Milestone 2
   ☐ Milestone 3
     ☐ Rebase `rmq_transport` on async implementation of `TransportInstance`

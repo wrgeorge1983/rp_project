@@ -29,6 +29,7 @@ class State():
         self.config_file = None
         self.topology_file = None
         self.log_debug = False
+        self.ext_debug = False
 
 
 pass_state = click.make_pass_decorator(State, ensure=True)  # what does 'ensure' mean here?
@@ -42,10 +43,19 @@ def option_callback(ctx, param, value):
     return value
 
 
-def debug_option(f):
+def local_debug_option(f):
+    """enables debug in our code"""
     return click.option('--debug/--no-debug',
                         expose_value=False,
-                        help='Enables or disables debug mode',
+                        help='Enables or disables debug mode in this project only',
+                        callback=option_callback)(f)
+
+
+def external_debug_option(f):
+    """enables debug in external libraries"""
+    return click.option('--ext-debug/--no-ext-debug',
+                        expose_value=False,
+                        help='Enables or disables debug mode in external libararies',
                         callback=option_callback)(f)
 
 
@@ -76,7 +86,8 @@ def topo_file_option(f):
 
 def common_options(f):
     # f = debug_option(config_file_option(topo_file_option(log_debug(f))))
-    f = debug_option(f)
+    f = local_debug_option(f)
+    f = external_debug_option(f)
     f = config_file_option(f)
     f = topo_file_option(f)
     f = log_debug(f)
@@ -85,7 +96,8 @@ def common_options(f):
 def common_state_ops(state):
     if state.debug:
         log.parent.setLevel(logging.DEBUG)
-        # logging.getLogger('asyncio').setLevel(logging.DEBUG)
+    if state.ext_debug:
+        logging.getLogger('asyncio').setLevel(logging.DEBUG)
         logging.getLogger('aio_pika').setLevel(logging.DEBUG)
     if state.log_debug:
         import logging_tree
@@ -138,7 +150,8 @@ def hostname_option(f):
 
 
 def mock1_options(f):
-    f = debug_option(f)
+    f = local_debug_option(f)
+    f = external_debug_option(f)
     f = hostname_option(f)
     f = topo_file_option(f)
     f = log_debug(f)
@@ -156,7 +169,9 @@ def mock1_actor(state, timeout):
 
 @mock1.command(name='initiator')
 @mock1_options
+@click.option('--timeout', 'timeout', default=60)
+@click.option('-m', '--message', 'msg', default='HELLO')
 @pass_state
-def mock1_actor(state):
+def mock1_actor(state, msg, timeout):
     common_state_ops(state)
-    print('mock1_initiator')
+    mock_protocol_1.start_initiator(state, msg, timeout)
