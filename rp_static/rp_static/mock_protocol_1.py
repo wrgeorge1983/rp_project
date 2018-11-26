@@ -298,7 +298,7 @@ def start_actor(state, timeout):
         log.debug('running ceased')
 
 
-def start_initiator(state, msg: str, timeout):
+def start_initiator(state, msg: str, timeout, interface):
 
     log.debug('entering start_actor()')
     loop = asyncio.get_event_loop()
@@ -311,9 +311,17 @@ def start_initiator(state, msg: str, timeout):
 
     log.debug('instances configured, creating receive tasks')
 
-    for instance in transport_instances:
+    if interface is None:
+        instances = transport_instances
+    else:
+        instances = [
+            instance for instance in transport_instances
+            if instance.logical_interface == interface
+        ]
+
+    for instance in instances:
         loop.create_task(instance.send(msg.encode()))
-        # loop.create_task(instance.recv())
+
     log.debug('receive tasks created')
 
     if timeout:

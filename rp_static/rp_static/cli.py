@@ -171,7 +171,8 @@ def mock1_actor(state, timeout):
 @mock1_options
 @click.option('--timeout', 'timeout', default=60)
 @click.option('-m', '--message', 'msg', default='HELLO')
+@click.option('-i', '--interface_name', 'interface_name', default=None)
 @pass_state
-def mock1_actor(state, msg, timeout):
+def mock1_initiator(state, msg, timeout, interface_name):
     common_state_ops(state)
-    mock_protocol_1.start_initiator(state, msg, timeout)
+    mock_protocol_1.start_initiator(state, msg, timeout, interface_name)

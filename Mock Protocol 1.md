@@ -19,6 +19,7 @@
     * given hostname and topology file
         * attach to appropriate RMQ exchanges
     * can pub messages to:
+        * all interfaces
         * specified interface
     * can share identity with one Actor without issue
 * Actor
