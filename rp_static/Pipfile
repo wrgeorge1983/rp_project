@@ -11,6 +11,7 @@ click = "*"
 pyyaml = "*"
 pika = "*"
 logging-tree = "*"
+aio-pika = "*"
 
 [requires]
 python_version = "3.6"

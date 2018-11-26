@@ -6,7 +6,11 @@ setup(
     include_package_data=True,
     install_requires=[
         'requests',
-        'click'
+        'click',
+        'pika',
+        'aio_pika',
+        'pyyaml',
+        'logging-tree'
     ],
     entry_points={
         'console_scripts': [
