@@ -308,13 +308,49 @@ async def config_instances_from_state(state, loop):
 #         await instance.recv()
 
 
-async def _timeout(n, loop):
+async def _loop_timeout(n, loop):
     await asyncio.sleep(n, loop=loop)
     loop.stop()
 
 
+actor_state = {
+    'timer_running': False
+}
+
+
+class AsyncSleeper:
+    def __init__(self, n):
+        self.n = n
+
+    async def __aenter__(self):
+        await asyncio.sleep(self.n)
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        pass
+
+async def _timeout_callback(n, f):
+    # await asyncio.sleep(n)
+    async with AsyncSleeper(n):
+        actor_state['timer_running'] = False
+        await f
+
+
+async def actor_message_echoer(msg:TransportMessage):
+    instances = transport_instances
+    loop = asyncio.get_event_loop()
+    for instance in instances:
+        loop.create_task(instance.send(msg.content))
+
+
 def actor_message_handler(msg:TransportMessage):  # could be protocol entry point?
-    log.info(f'ACTOR RECEIVED MESSAGE {msg.__dict__}')
+    if actor_state['timer_running']:
+        log.debug('Message discarded due to running timer')
+        return
+    log.debug(f'ACTOR RECEIVED MESSAGE {msg}')
+    actor_state['timer_running'] = True  # probably need a lock here
+    loop = asyncio.get_event_loop()
+    f = actor_message_echoer
+    loop.create_task(_timeout_callback(5, f(msg)))
 
 
 def start_actor(state, timeout):
@@ -336,7 +372,7 @@ def start_actor(state, timeout):
 
     if timeout:
         log.debug(f'adding timeout of {timeout} seconds')
-        loop.create_task(_timeout(timeout, loop))
+        loop.create_task(_loop_timeout(timeout, loop))
 
     with LoopExceptionHandler(loop):
         log.debug('running loop forever!')
@@ -372,7 +408,7 @@ def start_initiator(state, msg: str, timeout, interface):
 
     if timeout:
         log.debug(f'adding timeout of {timeout} seconds')
-        loop.create_task(_timeout(timeout, loop))
+        loop.create_task(_loop_timeout(timeout, loop))
 
     with LoopExceptionHandler(loop):
         log.debug('running loop forever!')

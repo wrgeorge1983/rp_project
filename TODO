@@ -3,12 +3,15 @@
 # ALT-D to Done
 # ALT-C to Cancel
 # CTRL-SHIFT-A to archive all cancelled/done items
+Repo Health:
+  ☐ Add a README
+  ☐ Add a LICENSE file?
+
 Deployment Workflow:
   ☐ topology_config parser more work
   ☐ null
 
 Test Functionality - Mock Protocool:
-  ☐ Milestone 2
   ☐ Milestone 3
     ☐ Rebase `rmq_transport` on async implementation of `TransportInstance`
       ☐ test on 3.7?
@@ -71,6 +74,11 @@ Core Functionality - Management Plane:
   ☐ null
 
 Archive:
+  ✔ Milestone 2 @done(18-11-27 23:10) @project(Test Functionality - Mock Protocool)
+  ✔ which interface? @done(18-11-27 22:49) @project(Test Functionality - Mock Protocool)
+  ✔ callback can reference the TransportInstanceCollection @done(18-11-27 22:49) @project(Test Functionality - Mock Protocool)
+  ✔ how to timer? @done(18-11-27 22:49) @project(Test Functionality - Mock Protocool)
+  ✔ asyncio context manager???? @done(18-11-27 23:09) @project(Test Functionality - Mock Protocool)
   ✔ Milestone 1 @done(18-11-26 18:39) @project(Test Functionality - Mock Protocool)
   ✔ CLI hooks @done(18-11-26 11:47) @project(Test Functionality - Mock Protocool)
   ✔ re-implement rmq_transport based on `aio_pika` @done(18-11-26 11:47) @project(Test Functionality - Mock Protocool)
