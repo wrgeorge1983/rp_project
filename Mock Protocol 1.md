@@ -91,4 +91,4 @@ becomes
 
 
 ## Milestone 3
-* Rebase `rmq_transport` on async implementation of `TransportInstance`
+    * Implement Actor as Class, not functions sharing global state

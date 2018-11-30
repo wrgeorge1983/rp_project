@@ -11,24 +11,17 @@ Deployment Workflow:
   ☐ topology_config parser more work
   ☐ null
 
-Test Functionality - Mock Protocool:
-  ☐ Milestone 3
-    ✔ Remove sleeper context manager, because, why the hell do you need that inside of an existing event loop @done(18-11-29 23:26)
-    ✔ Implement Actor as Class, not functions sharing global state @done(18-11-30 00:04)
-    ☐ Rebase `rmq_transport` on async implementation of `TransportInstance`
-      ☐ test on 3.7?
-  ☐ 1.0 Spec complete
-
 Core Functionality - Logical Forwarding Plane:
-  ☐ FIB
+  ☐ FIB - THIS IS THE NEXT THING I NEED TO WORK ON
+    ☐ Simple manager class
     ☐ Address -> egress_interface
 
 Core Functionality - Transport Forwarding Plane:
-  ☐ Configure Transports
+  ✔ Configure Transports @done(18-11-30 01:52)
   
 Core Functionality - Transport Forwarding Plane - RabbitMQ:
-  ☐ Initial usage of asyncio
-  ☐ Select transport instances
+  ✔ Initial usage of asyncio @done(18-11-30 01:52)
+  ✔ Select transport instances @done(18-11-30 01:55)
 
 Core Functionality - Control Plane Layer 3/4:
   ☐ egress_interface -> header fields 
@@ -39,7 +32,7 @@ Core Functionality - Control Plane Layer 3/4:
       ☐ New sessions inbound
   ☐ just enough IP to keep track of source/dest addresses, etc.
     ☐ unicast
-    ☐ broadcastTOD
+    ☐ broadcast
     ☐ multicast
 
 Core Functionality - Control Plane:
@@ -76,6 +69,12 @@ Core Functionality - Management Plane:
   ☐ null
 
 Archive:
+  ✔ Milestone 3 @done(18-11-30 01:49) @project(Test Functionality - Mock Protocool)
+  ✔ Remove sleeper context manager, because, why the hell do you need that inside of an existing event loop @done(18-11-29 23:26) @project(Test Functionality - Mock Protocool)
+  ✔ Implement Actor as Class, not functions sharing global state @done(18-11-30 00:04) @project(Test Functionality - Mock Protocool)
+  ✘ Rebase `rmq_transport` on async implementation of `TransportInstance` @cancelled(18-11-30 00:47) @project(Test Functionality - Mock Protocool)
+  ✔ test on 3.7? @done(18-11-30 01:49) @project(Test Functionality - Mock Protocool)
+  ✔ 1.0 Spec complete @done(18-11-30 01:49) @project(Test Functionality - Mock Protocool)
   ✔ Milestone 2 @done(18-11-27 23:10) @project(Test Functionality - Mock Protocool)
   ✔ which interface? @done(18-11-27 22:49) @project(Test Functionality - Mock Protocool)
   ✔ callback can reference the TransportInstanceCollection @done(18-11-27 22:49) @project(Test Functionality - Mock Protocool)
