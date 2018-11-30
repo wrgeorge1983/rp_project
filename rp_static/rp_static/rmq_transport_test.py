@@ -1,4 +1,4 @@
-"""rmq_transport.py
+"""rmq_transport_test.py
 define RabbitMQ based transport"""
 import logging
 from typing import List, Type, Dict

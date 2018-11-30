@@ -5,7 +5,7 @@ import click
 import yaml
 
 
-import rp_static.rmq_transport as rmq_transport
+import rp_static.rmq_transport_test as rmq_transport_test
 from rp_static.utils import get_configs
 import rp_static.mock_protocol_1 as mock_protocol_1
 
@@ -125,7 +125,7 @@ def rmq():
 @pass_state
 def rmq_pub(state, msg, network_name, interface_name):
     common_state_ops(state)
-    rmq_transport.test_rmq_pub(state, msg, network_name=network_name, interface_name=interface_name)
+    rmq_transport_test.test_rmq_pub(state, msg, network_name=network_name, interface_name=interface_name)
 
 
 @rmq.command(name='sub_test')
@@ -134,7 +134,7 @@ def rmq_pub(state, msg, network_name, interface_name):
 @pass_state
 def rmq_sub(state, interface_name):
     common_state_ops(state)
-    rmq_transport.test_rmq_sub(state, interface_name=interface_name)
+    rmq_transport_test.test_rmq_sub(state, interface_name=interface_name)
 
 
 @click.group(name='mock1')
