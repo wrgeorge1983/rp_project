@@ -164,7 +164,7 @@ def mock1_options(f):
 @pass_state
 def mock1_actor(state, timeout):
     common_state_ops(state)
-    mock_protocol_1.start_actor(state, timeout)
+    mock_protocol_1.start_actor_v1(state, timeout)
 
 
 @mock1.command(name='initiator')
