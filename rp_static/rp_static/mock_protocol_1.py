@@ -318,21 +318,10 @@ actor_state = {
 }
 
 
-class AsyncSleeper:
-    def __init__(self, n):
-        self.n = n
-
-    async def __aenter__(self):
-        await asyncio.sleep(self.n)
-
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        pass
-
 async def _timeout_callback(n, f):
-    # await asyncio.sleep(n)
-    async with AsyncSleeper(n):
-        actor_state['timer_running'] = False
-        await f
+    await asyncio.sleep(n)
+    actor_state['timer_running'] = False
+    await f
 
 
 async def actor_message_echoer(msg:TransportMessage):

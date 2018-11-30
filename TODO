@@ -13,6 +13,8 @@ Deployment Workflow:
 
 Test Functionality - Mock Protocool:
   ☐ Milestone 3
+    ✔ Remove sleeper context manager, because, why the hell do you need that inside of an existing event loop @done(18-11-29 23:26)
+    ☐ Implement Actor as Class, not functions sharing global state
     ☐ Rebase `rmq_transport` on async implementation of `TransportInstance`
       ☐ test on 3.7?
   ☐ 1.0 Spec complete
