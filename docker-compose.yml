@@ -9,7 +9,7 @@ services:
       RP_DEBUG: "true"
       RP_LOG_CONFIG: configs/loggingconf.yml
       RP_TOPOLOGY_FILE: configs/topology.yml
-      RP_CONFIG_FILE: configs/r1.config.yml
+      RP_CONFIG_FILE: configs/R1.config.yml
     volumes:
       - configs:/usr/src/app/configs
   r2:
@@ -20,7 +20,7 @@ services:
       RP_DEBUG: "true"
       RP_LOG_CONFIG: configs/loggingconf.yml
       RP_TOPOLOGY_FILE: configs/topology.yml
-      RP_CONFIG_FILE: configs/r2.config.yml
+      RP_CONFIG_FILE: configs/R2.config.yml
     volumes:
       - configs:/usr/src/app/configs
   rmq:

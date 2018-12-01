@@ -193,7 +193,19 @@ def cp1():
 
 
 def timeout_option(f):
-    return click.option('--timeout', 'timeout', default=15)
+    return click.option('--timeout', 'timeout',
+                        default=15,
+                        expose_value=False,
+                        callback=option_callback)(f)
+
+
+def config_file_path_option(f):
+    return click.option('--config-path', 'config_file_path',
+                        envvar='RP_CONFIG_PATH',
+                        required=True,
+                        expose_value=False,
+                        type=click.Path(),
+                        callback=option_callback)(f)
 
 
 def cp1_options(f):
@@ -201,6 +213,7 @@ def cp1_options(f):
     f = external_debug_option(f)
     f = hostname_option(f)
     f = topo_file_option(f)
+    f = config_file_path_option(f)
     f = log_debug(f)
     f = timeout_option(f)
     return f
