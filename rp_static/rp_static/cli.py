@@ -8,6 +8,7 @@ import yaml
 import rp_static.rmq_transport_test as rmq_transport_test
 from rp_static.utils import get_configs
 import rp_static.mock_protocol_1 as mock_protocol_1
+import rp_static.control_plane_v1 as control_plane_v1
 
 
 def setup_logging():
@@ -30,6 +31,7 @@ class State():
         self.topology_file = None
         self.log_debug = False
         self.ext_debug = False
+        self.hostname = None
 
 
 pass_state = click.make_pass_decorator(State, ensure=True)  # what does 'ensure' mean here?
@@ -183,3 +185,30 @@ def mock1_initiator(state, msg, timeout, interface_name, dict_input):
             }
         }
     mock_protocol_1.start_initiator(state, msg, timeout, interface_name)
+
+
+@click.group(name='cp1')
+def cp1():
+    pass
+
+
+def timeout_option(f):
+    return click.option('--timeout', 'timeout', default=15)
+
+
+def cp1_options(f):
+    f = local_debug_option(f)
+    f = external_debug_option(f)
+    f = hostname_option(f)
+    f = topo_file_option(f)
+    f = log_debug(f)
+    f = timeout_option(f)
+    return f
+
+
+@cp1.command(name='start')
+@cp1_options
+@pass_state
+def cp1_start(state):
+    common_state_ops(state)
+    control_plane_v1.start_cp(state)

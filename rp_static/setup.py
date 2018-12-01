@@ -16,7 +16,8 @@ setup(
         'console_scripts': [
             'rp_static = rp_static.__main__:main',
             'rp_rmq = rp_static.__main__:rmq',
-            'rp_mock1 = rp_static.__main__:mock1'
+            'rp_mock1 = rp_static.__main__:mock1',
+            'rp_cp1 = rp_static.__main__:cp1'
         ]
     }
 )
