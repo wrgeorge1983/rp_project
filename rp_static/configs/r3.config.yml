@@ -1,5 +1,5 @@
 ---
-hostname: R4
+hostname: R3
 
 protocols:
   rip:
@@ -8,4 +8,6 @@ protocols:
 
 interfaces:
   E0:
-    ipaddr: 10.0.4.2/30
+    ipaddr: 10.1.1.3/24
+  E1:
+    ipaddr: 10.0.3.2/30

@@ -9,6 +9,9 @@ protocols:
 
 interfaces:
   E0:
-    ipaddr: 1.1.1.1/30
+    ipaddr: 10.0.1.1/24
   E1:
-    ipaddr: 10.0.0.1/30
+    ipaddr: 10.0.1.2/24
+  E2:
+    ipaddr: 10.1.1.1/24
+
