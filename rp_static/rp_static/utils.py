@@ -5,8 +5,6 @@ import yaml
 import logging
 import os
 
-from rp_static.mock_protocol_1 import log
-
 log = logging.getLogger(__name__)
 
 
