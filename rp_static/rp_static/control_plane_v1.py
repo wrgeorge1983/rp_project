@@ -59,14 +59,17 @@ class FIB:
         #     IPv4Network('10.1.8.0/24'): FIBNextHop('10.0.1.3')
         # }
 
-    def lookup(self, lookup_address):
+    def lookup(self, lookup_address, recursive=False):
         longest_match: Union[None, IPv4Network] = None
         for dest in self.destinations:
             if lookup_address in dest:
                 if (longest_match is None) or (dest.prefixlen > longest_match.prefixlen):
                     longest_match = dest
         try:
-            return self.destinations[longest_match]
+            result = self.destinations[longest_match]
+            if recursive and not isinstance(result, FIBEgressInterface):
+                result = self.lookup(result, recursive=True)
+            return result
         except KeyError:
             raise ValueError(f'Unable to find {lookup_address} in FIB')
 

@@ -17,6 +17,7 @@ Core Functionality - Logical Forwarding Plane (L2/L3):
   ✔ FIB - THIS IS THE NEXT THING I NEED TO WORK ON @done(18-12-01 15:00)
     ✔ Simple manager class @done(18-12-01 15:00)
     ✔ Address -> egress_interface @done(18-12-01 15:00)
+    ☐ Recursive lookups
 
 Core Functionality - Transport Forwarding Plane (L1/L2):
   ✔ Configure Transports @done(18-11-30 01:52)
@@ -58,7 +59,7 @@ Core Functionality - Control Plane:
 Core Functionality - Protocols - STATIC:
   ☐ Add routes from config
   ☐ rescind routes via config (maybe?)
-  ☐ Handle connected routes
+  ✔ Handle connected routes @done(18-12-01 15:08)
 
 Core Functionality - Protocols - RIP: 
   ☐ RIPv2
