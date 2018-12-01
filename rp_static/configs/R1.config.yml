@@ -6,6 +6,8 @@ protocols:
     interfaces:
       - E0
       - E1
+  static:
+    '10.1.8.0/24': 10.0.1.3
 
 interfaces:
   E0:
@@ -14,4 +16,3 @@ interfaces:
     ipaddr: 10.0.1.2/24
   E2:
     ipaddr: 10.1.1.1/24
-
