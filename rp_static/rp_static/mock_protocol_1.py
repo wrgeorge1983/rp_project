@@ -5,8 +5,8 @@ from typing import Union
 import asyncio
 
 import yaml
-import aio_pika, aio_pika.exceptions
-from rp_static.generic_l2 import TransportMessage, TransportInstance, TransportInstanceCollection
+from rp_static.generic_l2 import TransportMessage, TransportInstance, TransportInstanceCollection, get_mq_channel, \
+    config_instances_from_state, transport_instances
 
 from rp_static.utils import get_configs
 
@@ -57,53 +57,6 @@ class LoopExceptionHandler:
         log.debug('Exiting LoopExceptionHandler Context Manager')
         self.react()
         self.loop.set_exception_handler(self.loop.default_exception_handler)
-
-
-transport_instances = TransportInstanceCollection()
-
-
-async def get_mq_channel(config, loop) -> (aio_pika.Channel, aio_pika.Connection):
-    log.debug('entered get_mq_channel()')
-    mt_config = config['topology']['message_transport']
-    if not mt_config['type'] == 'rabbitmq':
-        raise ValueError('rmq pub/sub commands must be used with a message '
-                         'transport type of "rabbitmq", not {mt_config["type"]}')
-    rmq_host = mt_config['hostname']
-    log.info(f'Using {rmq_host} as rabbitMQ host')
-
-    connection = await aio_pika.connect(
-        f'amqp://guest:guest@{rmq_host}/', loop=loop
-    )
-
-    channel = await connection.channel()
-    return channel, connection
-
-
-async def config_instances_from_state(state, loop):
-    log.debug('entered config_instances_from_state()')
-    configs = get_configs(None, state.topology_file)
-    log.debug('configs collected')
-    channel, connection = await get_mq_channel(configs, loop=loop)
-    topology = configs['topology']
-    # router_config = configs['router_config']
-    hostname = state.hostname
-    my_topo = topology.get(hostname, {})
-    if not my_topo:
-        log.warning(f'No topology definition found for hostname {hostname}')
-        # TODO: Do something smarter with this
-        raise NotImplementedError('I plan to do something smarter with this, but haven\'t yet')
-
-    for interface, network_name in my_topo['interfaces'].items():
-        instance = TransportInstance(
-            logical_interface=interface,
-            network_name=network_name,
-            rmq_channel=channel,
-            rmq_connection=connection,
-            hostname=hostname
-        )
-        await instance.async_init()
-        log.debug('completed async_init()')
-        transport_instances.add_instance(instance)
 
 
 # async def work_from_state(state, loop):
