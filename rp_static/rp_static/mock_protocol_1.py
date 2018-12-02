@@ -4,8 +4,9 @@ import logging
 import asyncio
 
 import yaml
-from rp_static.generic_l2 import TransportMessage, TransportInstance, TransportInstanceCollection, get_mq_channel, \
+from rp_static.generic_l2 import TransportInstance, TransportInstanceCollection, get_mq_channel, \
     config_instances_from_state, transport_instances
+from rp_static.messages import TransportMessage
 
 from rp_static.utils import get_configs, LoopExceptionHandler, _loop_timeout
 

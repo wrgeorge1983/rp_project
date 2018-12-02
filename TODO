@@ -13,6 +13,7 @@ Deployment Workflow:
 
 Other Ideas:
   ☐ cli `State` object:  override get_attr (or whatever) to have failed gets always return None?
+  ☐ Decorator `@strict` that determines if a function/method can swallow & log a certain type of exception vs. hard failure
 
 Core Functionality - Transport Forwarding Plane (L1/L2):
   ☐ Leak any information needed from topology file to router config as early as possible 
@@ -22,10 +23,15 @@ Core Functionality - Transport Forwarding Plane (L1/L2):
 Core Functionality - Forwarding Plane Processing Pipeline?:
   ☐ Need to accept packets/frames/etc at one layer and process them through subsequent layers
     ☐ L3
-    ☐ just enough IP to keep track of source/dest addresses, etc. @today @started(18-12-02 17:21)
-      ☐ unicast @started(18-12-02 17:21)
-      ☐ broadcast @started(18-12-02 17:21)
-      ☐ multicast @started(18-12-02 17:21)
+      ☐ just enough IP to keep track of source/dest addresses, etc. @today @started(18-12-02 17:21)
+        At layer 3, we can't just blindly accept an egress interface as-specified  We have to make sure it makes sense.
+        ☐ Destination: 
+          ☐ FIB lookup must match specified interface if any
+          ☐ for link-local broadcast FIB lookup is the same, but we specify `dst_mac: 'FF:FF:FF:FF:FF:FF'`
+          ☐ for reserved BC/MC addresses we must specify interface
+        ☐ unicast @started(18-12-02 17:21)
+        ☐ broadcast @started(18-12-02 17:21)
+        ☐ multicast @started(18-12-02 17:21)
   ☐ Define listeners at different layers
 
 Core Functionality - Control Plane Layer 3/4:

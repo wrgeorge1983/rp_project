@@ -6,39 +6,10 @@ from typing import Union, Dict, List
 import logging
 
 import aio_pika
+from rp_static.messages import TransportMessage
 from rp_static.utils import get_configs
 
 log = logging.getLogger(__name__)
-
-
-class TransportMessage:
-    _serializable_attributes = [
-        'content',
-        'source_host',
-        'src_mac',
-        'dst_mac',
-        'egress_interface',
-        'ingress_interface',
-        'network_segment'
-    ]
-
-    def __init__(self, content, source_host=None, egress_interface=None, network_segment=None, src_mac=None, dst_mac=None):
-        self.content = content
-        self.source_host = source_host
-        self.egress_interface = egress_interface
-        self.ingress_interface = None
-        self.network_segment = network_segment
-        self.src_mac = src_mac
-        self.dst_mac = dst_mac
-
-    @property
-    def as_json(self) -> str:
-        r_dict = {key: val for key, val in self.__dict__.items()
-                  if (key in self._serializable_attributes and val is not None)}
-        return json.dumps(r_dict)
-
-    def __str__(self):
-        return self.as_json
 
 
 class TransportInstance:
@@ -72,7 +43,7 @@ class TransportInstance:
         log.debug(f'binding queue for {self.net_int}')
         await queue.bind(exchange=exchange)
 
-    async def _pub(self, msg:TransportMessage):
+    async def _pub(self, msg: TransportMessage):
         log.debug(f'publishing message {msg} on {self.net_int}')
         m_body = msg.as_json.encode()
         message = aio_pika.Message(body=m_body)
