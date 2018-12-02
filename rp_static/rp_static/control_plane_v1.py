@@ -106,11 +106,16 @@ class ForwardingPlane:
     def add_fib_entry(self, dest, value):
         self.fib.add_entry(dest, value)
 
+    def add_fib_entries_from_interface_configs(self):
+        self.fib.add_entries_from_interface_configs(self.interfaces)
+
+    def fib_lookup(self, lookup_address, recursive=False):
+        return self.fib.lookup(lookup_address, recursive)
+
 
 class ControlPlane:
     def __init__(self):
         self.fp = ForwardingPlane()
-        self._fib = self.fp.fib
 
     async def async_init(self, state, loop):
         log.debug('entering ControlPlane.async_init()')
@@ -126,7 +131,7 @@ class ControlPlane:
             {'name': key, 'config': self.process_interface_config(key, value)}
              for key, value in config['interfaces'].items()
         ]
-        self._fib.add_entries_from_interface_configs(self.fp.interfaces)
+        self.fp.add_fib_entries_from_interface_configs()
 
         try:
             self.process_static_protocol(config['protocols']['static'])
@@ -205,7 +210,7 @@ def start_cp(state):
     with utils.LoopExceptionHandler(loop):
         loop.run_until_complete(cp.async_init(state, loop))
 
-    log.info(f'Created fib: {repr(cp._fib)}')
+    log.info(f'Created fib: {repr(cp.fp.fib)}')
 
     test_destinations = [
         '192.168.1.1',
@@ -218,7 +223,7 @@ def start_cp(state):
     for dest in test_destinations:
         dest_addr = ip_address(dest)
         try:
-            result = cp._fib.lookup(dest_addr, recursive=True)
+            result = cp.fp.fib_lookup(dest_addr, recursive=True)
         except ValueError:
             result = 'NOT FOUND'
         log.info(f'looking up {dest} in fib: {repr(result)}')
