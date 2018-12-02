@@ -17,7 +17,9 @@ Core Functionality - Logical Forwarding Plane (L2/L3):
   ✔ FIB - THIS IS THE NEXT THING I NEED TO WORK ON @done(18-12-01 15:00)
     ✔ Simple manager class @done(18-12-01 15:00)
     ✔ Address -> egress_interface @done(18-12-01 15:00)
-    ☐ Recursive lookups
+    ✔ Recursive lookups @done(18-12-02 05:13)
+      ✔ First pass @done(18-12-02 05:13)
+      ✔ Further implementation once we've got static routes implemented @done(18-12-02 05:13)
 
 Core Functionality - Transport Forwarding Plane (L1/L2):
   ✔ Configure Transports @done(18-11-30 01:52)
@@ -57,9 +59,15 @@ Core Functionality - Control Plane:
     ☐ Lookups
     
 Core Functionality - Protocols - STATIC:
-  ☐ Add routes from config
-  ☐ rescind routes via config (maybe?)
+  ✔ Add routes from config @done(18-12-02 05:13)
+  ✘ rescind routes via config (maybe?) @cancelled(18-12-02 05:13)
   ✔ Handle connected routes @done(18-12-01 15:08)
+
+Core Functionality - Protocols - Mock Protocol v2:
+  ☐ Same as v1 but implemented at Layer 3
+  ☐ Multicast???????
+  ☐ or link-local broadcast????
+
 
 Core Functionality - Protocols - RIP: 
   ☐ RIPv2
@@ -71,6 +79,8 @@ Core Functionality - Management Plane:
   ☐ REST API
     ☐ http?
     ☐ via message bus?  maybe? 
+      ☐ dedicated queue for that purpose
+        including associate logical interface?
   ☐ CLI dependant upon REST API
   ☐ null
 

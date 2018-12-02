@@ -7,7 +7,7 @@ from ipaddress import ip_network, ip_interface, ip_address, \
 import logging
 log = logging.getLogger(__name__)
 from pprint import pformat, pprint
-from typing import Union, Sequence
+from typing import Union, Sequence, Dict
 
 import yaml
 
@@ -68,7 +68,7 @@ class FIB:
         try:
             result = self.destinations[longest_match]
             if recursive and not isinstance(result, FIBEgressInterface):
-                result = self.lookup(result, recursive=True)
+                result = self.lookup(result.address, recursive=True)
             return result
         except KeyError:
             raise ValueError(f'Unable to find {lookup_address} in FIB')
@@ -119,6 +119,18 @@ class ControlPlane:
         ]
         self._fib.add_entries_from_interface_configs(self.interfaces)
 
+        try:
+            self.process_static_protocol(config['protocols']['static'])
+        except KeyError:
+            pass
+
+    def process_static_protocol(self, config: Dict):
+        fib = self._fib
+        for dest_str, next_hop_str in config.items():
+            dest = ip_network(dest_str)
+            next_hop =  FIBNextHop(ip_address(next_hop_str))
+            fib.add_entry(dest, next_hop)
+
 
     @staticmethod
     def process_interface_config(name, config):
@@ -140,8 +152,6 @@ class ControlPlane:
 
             new_config[key] = new_value
         return new_config
-
-
 
 
 async def config_instances_from_state(state, loop):
@@ -175,6 +185,7 @@ async def config_instances_from_state(state, loop):
         transport_instances.add_instance(instance)
     return transport_instances, configs['router_config']
 
+
 def start_cp(state):
     log.debug('entering start_cp()')
     loop = asyncio.get_event_loop()
@@ -191,14 +202,15 @@ def start_cp(state):
     test_destinations = [
         '192.168.1.1',
         '10.0.1.1',
-        '10.0.0.0',
-        '10.0.1.8'
+        '10.0.1.8',
+        '10.1.8.5',
+        '10.8.0.3'
     ]
 
     for dest in test_destinations:
         dest_addr = ip_address(dest)
         try:
-            result = cp._fib.lookup(dest_addr)
+            result = cp._fib.lookup(dest_addr, recursive=True)
         except ValueError:
             result = 'NOT FOUND'
         log.info(f'looking up {dest} in fib: {repr(result)}')
