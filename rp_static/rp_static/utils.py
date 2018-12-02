@@ -113,3 +113,8 @@ class LoopExceptionHandler:
         log.debug('Exiting LoopExceptionHandler Context Manager')
         self.react()
         self.loop.set_exception_handler(self.loop.default_exception_handler)
+
+
+async def _loop_timeout(n, loop):
+    await asyncio.sleep(n, loop=loop)
+    loop.stop()

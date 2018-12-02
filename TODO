@@ -11,6 +11,9 @@ Deployment Workflow:
   ☐ topology_config parser more work
   ☐ null
 
+Other Ideas:
+  ☐ cli `State` object:  override get_attr (or whatever) to have failed gets always return None?
+
 Core Functionality - Logical Forwarding Plane (L2/L3):
   ✔ Configure logical interfaces from configuration file @done(18-12-01 15:00)
   ✔ Define class for interfaces??? or just datastructure? @done(18-12-01 15:00)
@@ -38,8 +41,10 @@ Core Functionality - Transport Forwarding Plane - RabbitMQ:
     still use click's path objects though
 
 
-Core Functionality - Control Plane Processing Pipeline?:
+Core Functionality - Forwarding Plane Processing Pipeline?:
   ☐ Need to accept packets/frames/etc at one layer and process them through subsequent layers
+  ☐ Define listeners at different layers
+    ✔ Define generic listener that can use patterns to accept/reject messages before handing off @done(18-12-02 07:32)
 
 Core Functionality - Control Plane Layer 3/4:
   ☐ egress_interface -> header fields 

@@ -102,6 +102,12 @@ class ForwardingPlane:
     def __init__(self):
         self.fib = FIB()
         self.interfaces = []
+        self.loop: asyncio.BaseEventLoop = None
+        self.tic: l2.TransportInstanceCollection = None
+
+    async def async_init(self, topology_config, state, loop):
+        self.loop = loop
+        await self.process_config(topology_config, state, loop)
 
     def add_fib_entry(self, dest, value):
         self.fib.add_entry(dest, value)
@@ -113,7 +119,7 @@ class ForwardingPlane:
         return self.fib.lookup(lookup_address, recursive)
 
     async def process_config(self, topology_config, state, loop):
-        self.transport_instance_collection = await self.config_rmq_instances_from_state(state, topology_config, loop)
+        self.tic = await self.config_rmq_instances_from_state(state, topology_config, loop)
 
     @staticmethod
     async def config_rmq_instances_from_state(state, topology_config, loop):
@@ -141,11 +147,52 @@ class ForwardingPlane:
             transport_instances.add_instance(instance)
         return transport_instances
 
+    def _register_listener_callback(self, cb, pattern, logical_interface:str):
+        transport_instance = self.tic.get_instance_by_interface_name(logical_interface)
+
+        def _cb(message):
+            log.debug(f'ForwardingPlane.listener_callback() processing message: {message}')
+            if self.kv_pattern_matcher(message, pattern):
+                # log.debug(f'message matched pattern: {pattern}')
+                cb(message)
+
+        self.loop.create_task(transport_instance.recv_w_callback(_cb))
+
+    @staticmethod
+    def kv_pattern_matcher(message:l2.TransportMessage, pattern:dict) -> bool:
+        log.debug('Entering ForwardingPlane.kv_pattern_matcher')
+
+        for key, value in pattern.items():
+            if getattr(message, key, None) != value:
+                log.debug('message did not match pattern')
+                return False
+        log.debug('message matched pattern')
+        return True
+
+    @staticmethod
+    def _interface_listener_filter_callback(inner_cb, msg_filter):
+        def _cb(message):
+            if msg_filter(message):
+                log.debug('message matched filter')
+                inner_cb(message)
+            log.debug('message did not match filter')
+        return _cb
+
+    def register_interface_listener(self, cb, logical_interface_name:str, msg_filter=None):
+        transport_instance = self.tic.get_instance_by_interface_name(logical_interface_name)
+
+        if msg_filter is None:
+            msg_filter = lambda x: True
+
+        cb = self._interface_listener_filter_callback(cb, msg_filter)
+
+        self.loop.create_task(transport_instance.recv_w_callback(cb))
 
 
 class ControlPlane:
     def __init__(self):
         self.fp = ForwardingPlane()
+        self.loop = None
 
     async def async_init(self, state, loop):
         log.debug('entering ControlPlane.async_init()')
@@ -157,7 +204,7 @@ class ControlPlane:
         log.debug('configs collected')
         router_config = configs['router_config']
         topology_config = configs['topology']
-        await self.fp.process_config(topology_config, state, loop)
+        await self.fp.async_init(topology_config, state, loop)
         self.process_config(router_config)
 
     def process_config(self, config):
@@ -230,3 +277,17 @@ def start_cp(state):
         except ValueError:
             result = 'NOT FOUND'
         log.info(f'looking up {dest} in fib: {repr(result)}')
+
+    if state.listen:
+        def cb(message):
+            print(message)
+
+        cp.fp.register_interface_listener(
+            cb=cb,
+            logical_interface_name='E1',
+            msg_filter=lambda x: 'EST' in x.content
+        )
+
+        loop.create_task(utils._loop_timeout(state.timeout, loop))
+        with utils.LoopExceptionHandler(loop):
+            loop.run_forever()

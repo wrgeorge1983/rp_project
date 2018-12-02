@@ -7,7 +7,7 @@ import yaml
 from rp_static.generic_l2 import TransportMessage, TransportInstance, TransportInstanceCollection, get_mq_channel, \
     config_instances_from_state, transport_instances
 
-from rp_static.utils import get_configs, LoopExceptionHandler
+from rp_static.utils import get_configs, LoopExceptionHandler, _loop_timeout
 
 log = logging.getLogger(__name__)
 
@@ -40,11 +40,6 @@ log = logging.getLogger(__name__)
 #     for instance in transport_instances._instances:
 #         log.debug('calling recv() for {instance.network_name}:{instance.logical_interface}.')
 #         await instance.recv()
-
-
-async def _loop_timeout(n, loop):
-    await asyncio.sleep(n, loop=loop)
-    loop.stop()
 
 
 class MPActor:

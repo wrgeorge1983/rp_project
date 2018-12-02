@@ -153,7 +153,7 @@ class TransportInstanceCollection:
         self._instances_by_interfaces[instance.logical_interface] = instance
         self._instances.append(instance)
 
-    def get_instance_by_interface_name(self, interface_name) -> TransportInstance:
+    def get_instance_by_interface_name(self, interface_name:str) -> TransportInstance:
         """
         :param interface_name: the interface name to search on.
         :return: a SINGLE instance associated with that interface name, if any exists.  Raises KeyError otherwise.
@@ -216,7 +216,7 @@ async def config_instances_from_state(state, loop):
     log.debug('entered config_instances_from_state()')
     configs = get_configs(None, state.topology_file)
     log.debug('configs collected')
-    channel, connection = await get_mq_channel(configs, loop=loop)
+    channel, connection = await get_mq_channel(configs['topology'], loop=loop)
     topology = configs['topology']
     # router_config = configs['router_config']
     hostname = state.hostname

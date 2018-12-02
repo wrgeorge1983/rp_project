@@ -220,6 +220,14 @@ def topo_filename_option(f):
                         callback=option_callback)(f)
 
 
+def listen_option(f):
+    return click.option('-l', '--listen',
+                        default=False,
+                        is_flag=True,
+                        expose_value=False,
+                        callback=option_callback)(f)
+
+
 def cp1_options(f):
     f = local_debug_option(f)
     f = external_debug_option(f)
@@ -228,6 +236,7 @@ def cp1_options(f):
     f = config_file_path_option(f)
     f = log_debug(f)
     f = timeout_option(f)
+    f = listen_option(f)
     return f
 
 
