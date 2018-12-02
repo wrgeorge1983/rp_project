@@ -1,4 +1,5 @@
 import asyncio
+from ipaddress import IPv4Address, IPv6Address
 from typing import Union
 import os
 import logging
@@ -122,3 +123,4 @@ async def _loop_timeout(n, loop):
     loop.stop()
 
 
+IPAddress = Union[IPv4Address, IPv6Address]

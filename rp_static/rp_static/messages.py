@@ -1,6 +1,11 @@
 """"messages.py
 defines messages for use in Forwarding Plane"""
 import json
+from ipaddress import ip_network, ip_interface, ip_address
+from ipaddress import IPv4Network, IPv6Network, IPv4Interface, IPv6Interface, IPv4Address, IPv6Address
+from typing import Union, Dict, Sequence, List
+
+from rp_static.utils import IPAddress
 
 
 class BaseMessage:
@@ -27,7 +32,8 @@ class TransportMessage(BaseMessage):
         'network_segment'
     )
 
-    def __init__(self, content, source_host=None, egress_interface=None, network_segment=None, src_mac=None, dst_mac=None):
+    def __init__(self, content, source_host=None, egress_interface=None,
+                 network_segment=None, src_mac=None, dst_mac=None):
         self.content = content
         self.source_host = source_host
         self.egress_interface = egress_interface
@@ -39,8 +45,17 @@ class TransportMessage(BaseMessage):
 
 class NetworkMessage(BaseMessage):
     _serializable_attributes = (
-        'content'
+        'content',
+        'dest_ip',
+        'src_ip',
+        'egress_interface',
+        'proto_number'
     )
 
-    def __init__(self, content):
+    def __init__(self, content, dest_ip: IPAddress, egress_interface_name=None,
+                 src_ip: IPAddress=None, proto_number=0):
         self.content = content
+        self.dest_ip = dest_ip
+        self.src_ip = src_ip
+        self.egress_interface_name = egress_interface_name
+        self.proto_number = proto_number
