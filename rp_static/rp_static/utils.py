@@ -1,9 +1,10 @@
 import asyncio
 from typing import Union
-
-import yaml
-import logging
 import os
+import logging
+
+import aiofiles
+import yaml
 
 log = logging.getLogger(__name__)
 
@@ -36,6 +37,30 @@ def get_configs_by_hostname(config_file_path, topology_file, hostname):
 
     log.info(f'Using topology file: {topology_file.name}')
     topology = yaml.load(topology_file)
+    log.debug(f'Got config: \n{yaml.dump(config)}')
+    log.debug(f'Got topology: \n{yaml.dump(topology)}')
+    return {
+        'router_config': config,
+        'topology': topology
+    }
+
+
+async def async_get_configs_by_hostname(config_file_path, topology_filename, hostname):
+    log.debug('entered async_get_configs_by_hostname')
+    config_filename = f'{hostname}.config.yml'
+    log.debug(f'config_file_path: {config_file_path}; config_filename: {config_filename}')
+    full_config_filename = os.path.join(config_file_path, config_filename)
+    full_topology_filename = os.path.join(config_file_path, topology_filename)
+    log.info(f'Using config file: {full_config_filename} and topology file: {full_topology_filename}')
+
+    async with aiofiles.open(full_config_filename) as infil:
+        contents = await infil.read()
+    config = yaml.load(contents)
+
+    async with aiofiles.open(full_topology_filename) as infil:
+        contents = await infil.read()
+    topology = yaml.load(contents)
+
     log.debug(f'Got config: \n{yaml.dump(config)}')
     log.debug(f'Got topology: \n{yaml.dump(topology)}')
     return {

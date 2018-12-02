@@ -13,6 +13,7 @@ pika = "*"
 logging-tree = "*"
 aio-pika = "*"
 multidict = "==4.5.2"
+aiofiles = "*"
 
 [requires]
 python_version = "3.7"

@@ -169,9 +169,9 @@ class ControlPlane:
 
 async def config_instances_from_state(state, loop):
     log.debug('entered config_instances_from_state()')
-    configs = utils.get_configs_by_hostname(state.config_file_path,
-                                            state.topology_file,
-                                            state.hostname)
+    configs = await utils.async_get_configs_by_hostname(state.config_file_path,
+                                                        state.topo_filename,
+                                                        state.hostname)
     log.debug('configs collected')
     channel, connection = await l2.get_mq_channel(configs, loop=loop)
     topology = configs['topology']

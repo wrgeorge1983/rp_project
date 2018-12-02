@@ -32,6 +32,9 @@ class State():
         self.log_debug = False
         self.ext_debug = False
         self.hostname = None
+        self.topo_filename = None
+        self.config_file_path = None
+        self.timeout = None
 
 
 pass_state = click.make_pass_decorator(State, ensure=True)  # what does 'ensure' mean here?
@@ -208,11 +211,20 @@ def config_file_path_option(f):
                         callback=option_callback)(f)
 
 
+def topo_filename_option(f):
+    return click.option('-t', '--topo-filename', 'topo_filename',
+                        envvar='RP_TOPO_FILENAME',
+                        required=True,
+                        expose_value=False,
+                        type=click.Path(),
+                        callback=option_callback)(f)
+
+
 def cp1_options(f):
     f = local_debug_option(f)
     f = external_debug_option(f)
     f = hostname_option(f)
-    f = topo_file_option(f)
+    f = topo_filename_option(f)
     f = config_file_path_option(f)
     f = log_debug(f)
     f = timeout_option(f)
