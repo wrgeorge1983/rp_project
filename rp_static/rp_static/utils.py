@@ -55,16 +55,18 @@ async def async_get_configs_by_hostname(config_file_path, topology_filename, hos
 
     async with aiofiles.open(full_config_filename) as infil:
         contents = await infil.read()
-    config = yaml.load(contents)
+    router_config = yaml.load(contents)
 
     async with aiofiles.open(full_topology_filename) as infil:
         contents = await infil.read()
     topology = yaml.load(contents)
 
-    log.debug(f'Got config: \n{yaml.dump(config)}')
+    router_config['interface_names'] = list(topology[hostname]['interfaces'].keys())
+
+    log.debug(f'Got config: \n{yaml.dump(router_config)}')
     log.debug(f'Got topology: \n{yaml.dump(topology)}')
     return {
-        'router_config': config,
+        'router_config': router_config,
         'topology': topology
     }
 

@@ -43,10 +43,18 @@ Core Functionality - Transport Forwarding Plane - RabbitMQ:
 
 Core Functionality - Forwarding Plane Processing Pipeline?:
   ☐ Need to accept packets/frames/etc at one layer and process them through subsequent layers
+    ✔ L2 "send" method @done(18-12-02 10:11)
+    ☐ L3
   ☐ Define listeners at different layers
     ✔ Define generic listener that can use patterns to accept/reject messages before handing off @done(18-12-02 07:32)
+  ✔ Test with "pulsar" that emits messages every n seconds @done(18-12-02 09:29)
+    ✔ In order to do this, we need to implement something like a `send()` method on the Control Plane itself @done(18-12-02 09:29)
+
 
 Core Functionality - Control Plane Layer 3/4:
+  ☐ Define testing cli commands
+    ✔ `listen` @done(18-12-02 10:10)
+    ✔ `pulsar` @done(18-12-02 10:10)
   ☐ egress_interface -> header fields 
   ☐ just enough tcp/udp to model a connection (2 unidirectional flows)
     ☐ random_high ports for tcp/udp
@@ -59,6 +67,10 @@ Core Functionality - Control Plane Layer 3/4:
     ☐ multicast
 
 Core Functionality - Control Plane:
+  ✔ Essential understanding of interfaces @done(18-12-02 10:12)
+  ☐ Basic send methods
+    ✔ send_text @done(18-12-02 10:12)
+    ☐ send() for well-formed messages
   ☐ RIB (Routing Information Base - nodes understanding of how to get places)
     ☐ RIB-Manager
       ☐ Intelligently dedupe events, handle null-ops sanely

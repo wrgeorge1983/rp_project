@@ -118,6 +118,10 @@ class ForwardingPlane:
     def fib_lookup(self, lookup_address, recursive=False):
         return self.fib.lookup(lookup_address, recursive)
 
+    def send(self, msg, logical_interface_name):
+        instance = self.tic.get_instance_by_interface_name(logical_interface_name)
+        self.loop.create_task(instance.send(msg))
+
     async def process_config(self, topology_config, state, loop):
         self.tic = await self.config_rmq_instances_from_state(state, topology_config, loop)
 
@@ -171,14 +175,19 @@ class ForwardingPlane:
 
     @staticmethod
     def _interface_listener_filter_callback(inner_cb, msg_filter):
+        log.debug('entering ForwardingPlane._interface_listener_filter_callback()')
+
         def _cb(message):
+            log.debug('executing ForwardingPlane listener filter closure')
             if msg_filter(message):
                 log.debug('message matched filter')
                 inner_cb(message)
-            log.debug('message did not match filter')
+            else:
+                log.debug('message did not match filter')
         return _cb
 
     def register_interface_listener(self, cb, logical_interface_name:str, msg_filter=None):
+        log.debug('entering ForwardingPlane.register_interface_listener()')
         transport_instance = self.tic.get_instance_by_interface_name(logical_interface_name)
 
         if msg_filter is None:
@@ -193,6 +202,7 @@ class ControlPlane:
     def __init__(self):
         self.fp = ForwardingPlane()
         self.loop = None
+        self.interface_names = []
 
     async def async_init(self, state, loop):
         log.debug('entering ControlPlane.async_init()')
@@ -209,6 +219,8 @@ class ControlPlane:
 
     def process_config(self, config):
         self.config = config
+        self.interface_names = config['interface_names']
+
         self.fp.interfaces = [
             {'name': key, 'config': self.process_interface_config(key, value)}
              for key, value in config['interfaces'].items()
@@ -248,6 +260,13 @@ class ControlPlane:
             new_config[key] = new_value
         return new_config
 
+    def send_text(self, msg_text, interface_names: Sequence[str] = None):
+        if interface_names is None:  # None == "all"
+            interface_names = self.interface_names
+
+        for interface_name in interface_names:
+            self.fp.send(msg_text, interface_name)
+
 
 def start_cp(state):
     log.debug('entering start_cp()')
@@ -278,16 +297,58 @@ def start_cp(state):
             result = 'NOT FOUND'
         log.info(f'looking up {dest} in fib: {repr(result)}')
 
-    if state.listen:
-        def cb(message):
-            print(message)
 
-        cp.fp.register_interface_listener(
-            cb=cb,
-            logical_interface_name='E1',
-            msg_filter=lambda x: 'EST' in x.content
-        )
+def listen(state):
+    log.debug('entering listen()')
+    loop = asyncio.get_event_loop()
+    if state.ext_debug:
+        loop.set_debug(enabled=True)
 
-        loop.create_task(utils._loop_timeout(state.timeout, loop))
-        with utils.LoopExceptionHandler(loop):
-            loop.run_forever()
+    cp = ControlPlane()
+
+    with utils.LoopExceptionHandler(loop):
+        loop.run_until_complete(cp.async_init(state, loop))
+
+    def cb(message):
+        print(message)
+
+    cp.fp.register_interface_listener(
+        cb=cb,
+        logical_interface_name='E0',
+        msg_filter=lambda x: 'EST' in x.content
+    )
+
+    loop.create_task(utils._loop_timeout(state.timeout, loop))
+    with utils.LoopExceptionHandler(loop):
+        loop.run_forever()
+
+
+def pulsar(state, message):
+    log.debug('entering pulsar()')
+    loop = asyncio.get_event_loop()
+    if state.ext_debug:
+        loop.set_debug(enabled=True)
+
+    cp = ControlPlane()
+    with utils.LoopExceptionHandler(loop):
+        loop.run_until_complete(cp.async_init(state, loop))
+
+    loop.create_task(utils._loop_timeout(state.timeout, loop))
+
+    async def pulse(pulse_interval:int, msg_text, interface_names=None):
+        while True:
+            log.debug('pulse() is about to sleep')
+            await asyncio.sleep(pulse_interval)
+            log.debug('pulse() is about to send')
+            cp.send_text(msg_text, interface_names=interface_names)
+            log.debug('pulse() sent')
+
+    log.debug('Creating pulsar task')
+    loop.create_task(
+        pulse(3, message, ('E0', 'E2'))
+    )
+
+    with utils.LoopExceptionHandler(loop):
+        loop.run_forever()
+
+

@@ -15,17 +15,21 @@ class TransportMessage:
     _serializable_attributes = [
         'content',
         'source_host',
+        'src_mac',
+        'dst_mac',
         'egress_interface',
         'ingress_interface',
         'network_segment'
     ]
 
-    def __init__(self, content, source_host=None, egress_interface=None, network_segment=None):
+    def __init__(self, content, source_host=None, egress_interface=None, network_segment=None, src_mac=None, dst_mac=None):
         self.content = content
         self.source_host = source_host
         self.egress_interface = egress_interface
         self.ingress_interface = None
         self.network_segment = network_segment
+        self.src_mac = src_mac
+        self.dst_mac = dst_mac
 
     @property
     def as_json(self) -> str:
@@ -88,23 +92,36 @@ class TransportInstance:
 
     def egress_format_message(self, msg: Union[str, dict, TransportMessage]) -> TransportMessage:
         if isinstance(msg, TransportMessage):
+            # log.debug('TransportInterface.egress_format_message given TransportMessage')
             pub_message = msg
         elif isinstance(msg, (dict, str)):
+            # log.debug(f'TransportInterface.egress_format_message given {type(msg)}:{repr(msg)}')
             pub_message = TransportMessage(content=msg)
         else:
             raise NotImplementedError(f'send() only works on types str, TransportMessage, or dict.  Not {type(msg)}')
-
         pub_message.egress_interface = self.logical_interface
         pub_message.source_host = self.hostname
+        log.debug(f'TransportInterface.egress_format_message given src_mac of {pub_message.src_mac}')
+        if pub_message.src_mac is None:
+            log.debug('TransportInterface.egress_format_message supplying src_mac')
+            pub_message.src_mac = f'{self.hostname}:{pub_message.egress_interface}'
         pub_message.network_segment = self.network_name
         return pub_message
 
     def ingress_format_message(self, i_msg: aio_pika.IncomingMessage) -> Union[TransportMessage, None]:
         m_body = json.loads(i_msg.body)
         msg = TransportMessage(**m_body)
-        if msg.egress_interface == self.logical_interface:
-            return
+
         msg.ingress_interface = self.logical_interface
+        my_mac = f'{self.hostname}:{self.logical_interface}'
+
+        if msg.src_mac == my_mac:
+            log.debug('TransportInstance rejecting incomming message because it\'s from us!')
+            return
+
+        if msg.dst_mac is None:
+            msg.dst_mac = my_mac
+
         return msg
 
     async def send(self, msg:Union[str, TransportMessage, dict]):
@@ -112,11 +129,13 @@ class TransportInstance:
         await self._pub(pub_message)
 
     async def recv_w_callback(self, callback=None):
+        log.debug('entering TransportInstance.recv_w_callback()')
         if callback is None:
             log.debug('None callback used')
             callback = self.queue_callback
 
         def _callback(message):
+            log.debug('executing TransportInstance recv closure')
             message = self.ingress_format_message(message)
             if message is not None:
                 callback(message)

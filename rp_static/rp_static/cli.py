@@ -236,7 +236,6 @@ def cp1_options(f):
     f = config_file_path_option(f)
     f = log_debug(f)
     f = timeout_option(f)
-    f = listen_option(f)
     return f
 
 
@@ -246,3 +245,20 @@ def cp1_options(f):
 def cp1_start(state):
     common_state_ops(state)
     control_plane_v1.start_cp(state)
+
+
+@cp1.command(name='listen')
+@cp1_options
+@pass_state
+def cp1_listen(state):
+    common_state_ops(state)
+    control_plane_v1.listen(state)
+
+
+@cp1.command(name='pulsar')
+@cp1_options
+@click.option('-m', '--message', 'message', default='HELLO')
+@pass_state
+def cp1_pulsar(state, message):
+    common_state_ops(state)
+    control_plane_v1.pulsar(state, message)
