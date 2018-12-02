@@ -151,27 +151,27 @@ class ForwardingPlane:
             transport_instances.add_instance(instance)
         return transport_instances
 
-    def _register_listener_callback(self, cb, pattern, logical_interface:str):
-        transport_instance = self.tic.get_instance_by_interface_name(logical_interface)
-
-        def _cb(message):
-            log.debug(f'ForwardingPlane.listener_callback() processing message: {message}')
-            if self.kv_pattern_matcher(message, pattern):
-                # log.debug(f'message matched pattern: {pattern}')
-                cb(message)
-
-        self.loop.create_task(transport_instance.recv_w_callback(_cb))
-
-    @staticmethod
-    def kv_pattern_matcher(message:l2.TransportMessage, pattern:dict) -> bool:
-        log.debug('Entering ForwardingPlane.kv_pattern_matcher')
-
-        for key, value in pattern.items():
-            if getattr(message, key, None) != value:
-                log.debug('message did not match pattern')
-                return False
-        log.debug('message matched pattern')
-        return True
+    # def _register_listener_callback(self, cb, pattern, logical_interface:str):
+    #     transport_instance = self.tic.get_instance_by_interface_name(logical_interface)
+    #
+    #     def _cb(message):
+    #         log.debug(f'ForwardingPlane.listener_callback() processing message: {message}')
+    #         if self.kv_pattern_matcher(message, pattern):
+    #             # log.debug(f'message matched pattern: {pattern}')
+    #             cb(message)
+    #
+    #     self.loop.create_task(transport_instance.recv_w_callback(_cb))
+    #
+    # @staticmethod
+    # def kv_pattern_matcher(message:l2.TransportMessage, pattern:dict) -> bool:
+    #     log.debug('Entering ForwardingPlane.kv_pattern_matcher')
+    #
+    #     for key, value in pattern.items():
+    #         if getattr(message, key, None) != value:
+    #             log.debug('message did not match pattern')
+    #             return False
+    #     log.debug('message matched pattern')
+    #     return True
 
     @staticmethod
     def _interface_listener_filter_callback(inner_cb, msg_filter):

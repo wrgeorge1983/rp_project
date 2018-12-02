@@ -14,62 +14,38 @@ Deployment Workflow:
 Other Ideas:
   ☐ cli `State` object:  override get_attr (or whatever) to have failed gets always return None?
 
-Core Functionality - Logical Forwarding Plane (L2/L3):
-  ✔ Configure logical interfaces from configuration file @done(18-12-01 15:00)
-  ✔ Define class for interfaces??? or just datastructure? @done(18-12-01 15:00)
-  ✔ FIB - THIS IS THE NEXT THING I NEED TO WORK ON @done(18-12-01 15:00)
-    ✔ Simple manager class @done(18-12-01 15:00)
-    ✔ Address -> egress_interface @done(18-12-01 15:00)
-    ✔ Recursive lookups @done(18-12-02 05:13)
-      ✔ First pass @done(18-12-02 05:13)
-      ✔ Further implementation once we've got static routes implemented @done(18-12-02 05:13)
-
 Core Functionality - Transport Forwarding Plane (L1/L2):
-  ✔ Configure Transports @done(18-11-30 01:52)
   ☐ Leak any information needed from topology file to router config as early as possible 
     To preserve separation between the layers as much as possible
     Best place to do this is probably in `utils.get_configs_by_hostname()`
   
-Core Functionality - Transport Forwarding Plane - RabbitMQ:
-  ✔ Initial usage of asyncio @done(18-11-30 01:52)
-  ✔ Select transport instances @done(18-11-30 01:55)
-  ✔ Separate FP and CP configuration tasks @done(18-12-02 06:14)
-    ✔ Specifically `config_instances_from_state()` @done(18-12-02 06:14)
-    ✔ FP should really own the `TransportInstanceCollection` object, not the CP @done(18-12-02 06:14)
-  ✔ properly handle config file IO in async code @done(18-12-02 05:59)
-  ✔ stop using click's file objects @done(18-12-02 05:59)
-    still use click's path objects though
-
-
 Core Functionality - Forwarding Plane Processing Pipeline?:
   ☐ Need to accept packets/frames/etc at one layer and process them through subsequent layers
-    ✔ L2 "send" method @done(18-12-02 10:11)
     ☐ L3
+    ☐ just enough IP to keep track of source/dest addresses, etc. @today @started(18-12-02 17:21)
+      ☐ unicast @started(18-12-02 17:21)
+      ☐ broadcast @started(18-12-02 17:21)
+      ☐ multicast @started(18-12-02 17:21)
   ☐ Define listeners at different layers
-    ✔ Define generic listener that can use patterns to accept/reject messages before handing off @done(18-12-02 07:32)
-  ✔ Test with "pulsar" that emits messages every n seconds @done(18-12-02 09:29)
-    ✔ In order to do this, we need to implement something like a `send()` method on the Control Plane itself @done(18-12-02 09:29)
-
 
 Core Functionality - Control Plane Layer 3/4:
   ☐ Define testing cli commands
-    ✔ `listen` @done(18-12-02 10:10)
-    ✔ `pulsar` @done(18-12-02 10:10)
   ☐ egress_interface -> header fields 
   ☐ just enough tcp/udp to model a connection (2 unidirectional flows)
     ☐ random_high ports for tcp/udp
     ☐ connection state tracking
       ☐ New sessions outbound
       ☐ New sessions inbound
-  ☐ just enough IP to keep track of source/dest addresses, etc.
+  ☐ just enough IP to keep track of source/dest addresses, etc. @today
     ☐ unicast
     ☐ broadcast
     ☐ multicast
 
 Core Functionality - Control Plane:
-  ✔ Essential understanding of interfaces @done(18-12-02 10:12)
+  ☐ Basic receive methods @today 
+    ☐ Based on interface address, etc
+    ☐ validation, difference between unicast/multicat/etc
   ☐ Basic send methods
-    ✔ send_text @done(18-12-02 10:12)
     ☐ send() for well-formed messages
   ☐ RIB (Routing Information Base - nodes understanding of how to get places)
     ☐ RIB-Manager
@@ -85,33 +61,58 @@ Core Functionality - Control Plane:
         ☐ rescind de-selected routes
     ☐ Lookups
     
-Core Functionality - Protocols - STATIC:
-  ✔ Add routes from config @done(18-12-02 05:13)
-  ✘ rescind routes via config (maybe?) @cancelled(18-12-02 05:13)
-  ✔ Handle connected routes @done(18-12-01 15:08)
+Core Functionality - Protocols - Mock Protocol v1.5: @today
+  ☐ Reimplement v1.0 on Forwarding Plane / Control Plane as appropriate
 
 Core Functionality - Protocols - Mock Protocol v2:
   ☐ Same as v1 but implemented at Layer 3
   ☐ Multicast???????
   ☐ or link-local broadcast????
 
-
 Core Functionality - Protocols - RIP: 
   ☐ RIPv2
   ☐ RIPv1 ????
 
-Core Functionality - Management Plane:
+Core Functionality - Management Plane: @low
   First iteration is the deployment workflow
   Further iteration is low priority until lack of mgmt plane is painful
-  ☐ REST API
+  ☐ REST API 
     ☐ http?
     ☐ via message bus?  maybe? 
       ☐ dedicated queue for that purpose
         including associate logical interface?
-  ☐ CLI dependant upon REST API
+  ☐ CLI dependant upon REST API 
   ☐ null
 
 Archive:
+  ✔ Essential understanding of interfaces @done(18-12-02 10:12) @project(Core Functionality - Control Plane)
+  ✔ send_text @done(18-12-02 10:12) @project(Core Functionality - Control Plane)
+  ✔ L2 "send" method @done(18-12-02 10:11) @project(Core Functionality - Forwarding Plane Processing Pipeline?)
+  ✔ Define generic listener that can use patterns to accept/reject messages before handing off @done(18-12-02 07:32) @project(Core Functionality - Forwarding Plane Processing Pipeline?)
+  ✔ `listen` @done(18-12-02 10:10) @project(Core Functionality - Control Plane Layer 3/4)
+  ✔ `pulsar` @done(18-12-02 10:10) @project(Core Functionality - Control Plane Layer 3/4)
+  ✔ Test with "pulsar" that emits messages every n seconds @done(18-12-02 09:29) @project(Core Functionality - Forwarding Plane Processing Pipeline?)
+  ✔ In order to do this, we need to implement something like a `send()` method on the Control Plane itself @done(18-12-02 09:29) @project(Core Functionality - Forwarding Plane Processing Pipeline?)
+  ✔ Specifically `config_instances_from_state()` @done(18-12-02 06:14) @project(Core Functionality - Transport Forwarding Plane - RabbitMQ)
+  ✔ FP should really own the `TransportInstanceCollection` object, not the CP @done(18-12-02 06:14) @project(Core Functionality - Transport Forwarding Plane - RabbitMQ)
+  ✔ properly handle config file IO in async code @done(18-12-02 05:59) @project(Core Functionality - Transport Forwarding Plane - RabbitMQ)
+  ✔ stop using click's file objects @done(18-12-02 05:59) @project(Core Functionality - Transport Forwarding Plane - RabbitMQ)
+    still use click's path objects though
+  ✔ First pass @done(18-12-02 05:13) @project(Core Functionality - Logical Forwarding Plane (L2/L3))
+  ✔ Further implementation once we've got static routes implemented @done(18-12-02 05:13) @project(Core Functionality - Logical Forwarding Plane (L2/L3))
+  ✔ Add routes from config @done(18-12-02 05:13) @project(Core Functionality - Protocols - STATIC)
+  ✘ rescind routes via config (maybe?) @cancelled(18-12-02 05:13) @project(Core Functionality - Protocols - STATIC)
+  ✔ Handle connected routes @done(18-12-01 15:08) @project(Core Functionality - Protocols - STATIC)
+  ✔ Configure logical interfaces from configuration file @done(18-12-01 15:00) @project(Core Functionality - Logical Forwarding Plane (L2/L3))
+  ✔ Define class for interfaces??? or just datastructure? @done(18-12-01 15:00) @project(Core Functionality - Logical Forwarding Plane (L2/L3))
+  ✔ FIB - THIS IS THE NEXT THING I NEED TO WORK ON @done(18-12-01 15:00) @project(Core Functionality - Logical Forwarding Plane (L2/L3))
+  ✔ Simple manager class @done(18-12-01 15:00) @project(Core Functionality - Logical Forwarding Plane (L2/L3))
+  ✔ Address -> egress_interface @done(18-12-01 15:00) @project(Core Functionality - Logical Forwarding Plane (L2/L3))
+  ✔ Recursive lookups @done(18-12-02 05:13) @project(Core Functionality - Logical Forwarding Plane (L2/L3))
+  ✔ Select transport instances @done(18-11-30 01:55) @project(Core Functionality - Transport Forwarding Plane - RabbitMQ)
+  ✔ Separate FP and CP configuration tasks @done(18-12-02 06:14) @project(Core Functionality - Transport Forwarding Plane - RabbitMQ)
+  ✔ Configure Transports @done(18-11-30 01:52) @project(Core Functionality - Transport Forwarding Plane (L1/L2))
+  ✔ Initial usage of asyncio @done(18-11-30 01:52) @project(Core Functionality - Transport Forwarding Plane - RabbitMQ)
   ✔ Milestone 3 @done(18-11-30 01:49) @project(Test Functionality - Mock Protocool)
   ✔ Remove sleeper context manager, because, why the hell do you need that inside of an existing event loop @done(18-11-29 23:26) @project(Test Functionality - Mock Protocool)
   ✔ Implement Actor as Class, not functions sharing global state @done(18-11-30 00:04) @project(Test Functionality - Mock Protocool)
