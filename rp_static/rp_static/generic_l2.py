@@ -195,9 +195,9 @@ class L2_layer:
         self.transports.close()
 
 
-async def get_mq_channel(config, loop) -> (aio_pika.Channel, aio_pika.Connection):
+async def get_mq_channel(topology_config, loop) -> (aio_pika.Channel, aio_pika.Connection):
     log.debug('entered get_mq_channel()')
-    mt_config = config['topology']['message_transport']
+    mt_config = topology_config['message_transport']
     if not mt_config['type'] == 'rabbitmq':
         raise ValueError('rmq pub/sub commands must be used with a message '
                          'transport type of "rabbitmq", not {mt_config["type"]}')

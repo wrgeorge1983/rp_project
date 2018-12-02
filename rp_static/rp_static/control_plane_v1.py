@@ -112,6 +112,36 @@ class ForwardingPlane:
     def fib_lookup(self, lookup_address, recursive=False):
         return self.fib.lookup(lookup_address, recursive)
 
+    async def process_config(self, topology_config, state, loop):
+        self.transport_instance_collection = await self.config_rmq_instances_from_state(state, topology_config, loop)
+
+    @staticmethod
+    async def config_rmq_instances_from_state(state, topology_config, loop):
+        log.debug('entered ForwardingPlane.config_instances_from_state()')
+        channel, connection = await l2.get_mq_channel(topology_config, loop=loop)
+        hostname = state.hostname
+        my_topo = topology_config.get(hostname, {})
+        if not my_topo:
+            log.warning(f'No topology definition found for hostname {hostname}')
+            # TODO: Do something smarter with this
+            raise NotImplementedError('I plan to do something smarter with this, but haven\'t yet')
+
+        transport_instances = l2.TransportInstanceCollection()
+
+        for interface, network_name in my_topo['interfaces'].items():
+            instance = l2.TransportInstance(
+                logical_interface=interface,
+                network_name=network_name,
+                rmq_channel=channel,
+                rmq_connection=connection,
+                hostname=hostname
+            )
+            await instance.async_init()
+            log.debug('completed async_init()')
+            transport_instances.add_instance(instance)
+        return transport_instances
+
+
 
 class ControlPlane:
     def __init__(self):
@@ -121,8 +151,13 @@ class ControlPlane:
         log.debug('entering ControlPlane.async_init()')
         self.loop = loop
 
-        tic, router_config = await config_instances_from_state(state, loop)
-        self.transport_instance_collection = tic
+        configs = await utils.async_get_configs_by_hostname(state.config_file_path,
+                                                            state.topo_filename,
+                                                            state.hostname)
+        log.debug('configs collected')
+        router_config = configs['router_config']
+        topology_config = configs['topology']
+        await self.fp.process_config(topology_config, state, loop)
         self.process_config(router_config)
 
     def process_config(self, config):
@@ -167,38 +202,6 @@ class ControlPlane:
         return new_config
 
 
-async def config_instances_from_state(state, loop):
-    log.debug('entered config_instances_from_state()')
-    configs = await utils.async_get_configs_by_hostname(state.config_file_path,
-                                                        state.topo_filename,
-                                                        state.hostname)
-    log.debug('configs collected')
-    channel, connection = await l2.get_mq_channel(configs, loop=loop)
-    topology = configs['topology']
-    # router_config = configs['router_config']
-    hostname = state.hostname
-    my_topo = topology.get(hostname, {})
-    if not my_topo:
-        log.warning(f'No topology definition found for hostname {hostname}')
-        # TODO: Do something smarter with this
-        raise NotImplementedError('I plan to do something smarter with this, but haven\'t yet')
-
-    transport_instances = l2.TransportInstanceCollection()
-
-    for interface, network_name in my_topo['interfaces'].items():
-        instance = l2.TransportInstance(
-            logical_interface=interface,
-            network_name=network_name,
-            rmq_channel=channel,
-            rmq_connection=connection,
-            hostname=hostname
-        )
-        await instance.async_init()
-        log.debug('completed async_init()')
-        transport_instances.add_instance(instance)
-    return transport_instances, configs['router_config']
-
-
 def start_cp(state):
     log.debug('entering start_cp()')
     loop = asyncio.get_event_loop()
@@ -227,8 +230,3 @@ def start_cp(state):
         except ValueError:
             result = 'NOT FOUND'
         log.info(f'looking up {dest} in fib: {repr(result)}')
-
-
-
-
-

@@ -30,11 +30,11 @@ Core Functionality - Transport Forwarding Plane (L1/L2):
 Core Functionality - Transport Forwarding Plane - RabbitMQ:
   ✔ Initial usage of asyncio @done(18-11-30 01:52)
   ✔ Select transport instances @done(18-11-30 01:55)
-  ☐ Separate FP and CP configuration tasks
-    ☐ Specifically `config_instances_from_state()`
-    ☐ FP should really own the `TransportInstanceCollection` object, not the CP
-  ☐ properly handle config file IO in async code
-  ☐ stop using click's file objects
+  ✔ Separate FP and CP configuration tasks @done(18-12-02 06:14)
+    ✔ Specifically `config_instances_from_state()` @done(18-12-02 06:14)
+    ✔ FP should really own the `TransportInstanceCollection` object, not the CP @done(18-12-02 06:14)
+  ✔ properly handle config file IO in async code @done(18-12-02 05:59)
+  ✔ stop using click's file objects @done(18-12-02 05:59)
     still use click's path objects though
 
 
