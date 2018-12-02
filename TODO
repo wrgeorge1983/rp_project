@@ -31,6 +31,9 @@ Core Functionality - Transport Forwarding Plane - RabbitMQ:
   ✔ Initial usage of asyncio @done(18-11-30 01:52)
   ✔ Select transport instances @done(18-11-30 01:55)
 
+Core Functionality - Control Plane Processing Pipeline?:
+  ☐ Need to accept packets/frames/etc at one layer and process them through subsequent layers
+
 Core Functionality - Control Plane Layer 3/4:
   ☐ egress_interface -> header fields 
   ☐ just enough tcp/udp to model a connection (2 unidirectional flows)

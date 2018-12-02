@@ -98,10 +98,19 @@ class FIB:
         return f'{self.__class__.__name__}({str(self)})'
 
 
+class ForwardingPlane:
+    def __init__(self):
+        self.fib = FIB()
+        self.interfaces = []
+
+    def add_fib_entry(self, dest, value):
+        self.fib.add_entry(dest, value)
+
+
 class ControlPlane:
     def __init__(self):
-        self._fib = FIB()
-        self.interfaces = []
+        self.fp = ForwardingPlane()
+        self._fib = self.fp.fib
 
     async def async_init(self, state, loop):
         log.debug('entering ControlPlane.async_init()')
@@ -113,11 +122,11 @@ class ControlPlane:
 
     def process_config(self, config):
         self.config = config
-        self.interfaces = [
+        self.fp.interfaces = [
             {'name': key, 'config': self.process_interface_config(key, value)}
              for key, value in config['interfaces'].items()
         ]
-        self._fib.add_entries_from_interface_configs(self.interfaces)
+        self._fib.add_entries_from_interface_configs(self.fp.interfaces)
 
         try:
             self.process_static_protocol(config['protocols']['static'])
@@ -125,12 +134,11 @@ class ControlPlane:
             pass
 
     def process_static_protocol(self, config: Dict):
-        fib = self._fib
+        fp = self.fp
         for dest_str, next_hop_str in config.items():
             dest = ip_network(dest_str)
             next_hop =  FIBNextHop(ip_address(next_hop_str))
-            fib.add_entry(dest, next_hop)
-
+            fp.add_fib_entry(dest, next_hop)
 
     @staticmethod
     def process_interface_config(name, config):
