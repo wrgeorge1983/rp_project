@@ -123,4 +123,4 @@ async def _loop_timeout(n, loop):
     loop.stop()
 
 
-IPAddress = Union[IPv4Address, IPv6Address]
+IPAddressType = Union[IPv4Address, IPv6Address]

@@ -5,10 +5,11 @@ from ipaddress import IPv4Network, IPv6Network
 import logging
 log = logging.getLogger(__name__)
 from pprint import pformat
-from typing import Union
+from typing import Union, List
 
 from rp_static import generic_l2 as l2
-
+from rp_static.messages import TransportMessage, NetworkMessage
+from rp_static.utils import IPAddressType
 
 class FIBValue:
     def __init__(self, fib_id):
@@ -50,9 +51,11 @@ class FIB:
         #     IPv4Network('10.1.8.0/24'): FIBNextHop('10.0.1.3')
         # }
 
-    def lookup(self, lookup_address, recursive=False):
+    def lookup(self, lookup_address: IPAddressType, recursive=False):
+        log.debug(f'FIB.lookup(): looking up {lookup_address} in FIB')
         longest_match: Union[None, IPv4Network] = None
         for dest in self.destinations:
+            log.debug(f'FIB.Lookup(): checking {dest}')
             if lookup_address in dest:
                 if (longest_match is None) or (dest.prefixlen > longest_match.prefixlen):
                     longest_match = dest
@@ -60,8 +63,10 @@ class FIB:
             result = self.destinations[longest_match]
             if recursive and not isinstance(result, FIBEgressInterface):
                 result = self.lookup(result.address, recursive=True)
+            log.debug(f'FIB.lookup(): got {result}')
             return result
         except KeyError:
+            log.debug(f'FIB.lookup(): no result!')
             raise ValueError(f'Unable to find {lookup_address} in FIB')
 
     def add_entry(self, destination, value):
@@ -98,6 +103,7 @@ class ForwardingPlane:
 
     async def async_init(self, topology_config, state, loop):
         self.loop = loop
+        self.hostname = state.hostname
         await self.process_config(topology_config, state, loop)
 
     def add_fib_entry(self, dest, value):
@@ -106,16 +112,34 @@ class ForwardingPlane:
     def add_fib_entries_from_interface_configs(self):
         self.fib.add_entries_from_interface_configs(self.interfaces)
 
-    def fib_lookup(self, lookup_address, recursive=False):
+    def fib_lookup(self, lookup_address, recursive=False) -> Union[FIBNextHop, FIBEgressInterface]:
         return self.fib.lookup(lookup_address, recursive)
+
+    def fib_lookup_validate(self, lookup_address:IPAddressType, candidate:str):
+        log.debug(f'ForwardingPlane.fib_lookup_validate(): checking {lookup_address} against {candidate}')
+        try:
+            valid = self.fib_lookup(lookup_address, recursive=True).name == candidate
+        except ValueError:
+            valid = False
+        if not valid:  # unicast lookup failed, check for BC/MC
+            valid = lookup_address.is_multicast
+        if not valid:
+            candidate_interface = FIBEgressInterface(candidate)
+            egress_networks: List[Union[IPv4Network, IPv6Network]] = [dest for dest, value
+                                                                      in self.fib.destinations.items()
+                                                                      if value == candidate_interface]
+            valid = any(lookup_address == egress_network.broadcast_address for egress_network in egress_networks)
+        if valid:
+            log.debug(f'ForwardingPlane.fib_lookup_validate(): {candidate} is a valid Egress Interface for {lookup_address}')
+        return valid
 
     def l2_send(self, msg, logical_interface_name):
         instance = self.tic.get_instance_by_interface_name(logical_interface_name)
         self.loop.create_task(instance.send(msg))
 
-    def l3_send(self, msg, specified_logical_interface_name=None):
-        pass
-
+    def l3_send(self, l3_msg, specified_logical_interface_name=None):
+        l2_msg = self.l2_encap(l3_msg, egress_interface_name=specified_logical_interface_name, )
+        self.l2_send(l2_msg, logical_interface_name=specified_logical_interface_name)
 
     async def process_config(self, topology_config, state, loop):
         self.tic = await self.config_rmq_instances_from_state(state, topology_config, loop)
@@ -169,6 +193,30 @@ class ForwardingPlane:
         cb = self._interface_listener_filter_callback(cb, msg_filter)
 
         self.loop.create_task(transport_instance.recv_w_callback(cb))
+
+    def l2_encap(self, l3_message:NetworkMessage, src_mac=None, dest_mac=None, egress_interface_name=None):
+        # l3_message.as_dict() = {
+        #     'content': 'WE ARE HERE!',
+        #     'dest_ip': '10.8.0.4',
+        #     'src_ip': '10.0.1.1',
+        #     'egress_interface': None,
+        #     'proto_number': 8
+        # }
+        content = l3_message.as_dict
+        if egress_interface_name is None:
+            fib_egress_interface = self.fib_lookup(l3_message.dest_ip, recursive=True)
+            try:
+                egress_interface_name = fib_egress_interface.name
+            except AttributeError:
+                raise ValueError(f'FIB lookup for {l3_message.dest_ip} returned {fib_egress_interface} of type '
+                                 f'{type(fib_egress_interface)} instead of a valid FIBEgressInterface Object')
+
+        src_mac = src_mac if src_mac is not None else f'{self.hostname}:{egress_interface_name}'
+
+        l2_message = TransportMessage(content=content, egress_interface=egress_interface_name,
+                                      src_mac=src_mac, dst_mac=dest_mac, source_host=self.hostname)
+
+        return l2_message
 
     # def _register_listener_callback(self, cb, pattern, logical_interface:str):
     #     transport_instance = self.tic.get_instance_by_interface_name(logical_interface)

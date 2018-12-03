@@ -9,7 +9,7 @@ from typing import Sequence, Dict
 
 from rp_static import utils
 from rp_static.forwarding_plane_v1 import FIBNextHop, ForwardingPlane
-
+from rp_static.messages import NetworkMessage
 
 GLOBAL_STATE = {
     'strict_config_handling': True
@@ -78,12 +78,28 @@ class ControlPlane:
             new_config[key] = new_value
         return new_config
 
-    def l2_send_text(self, msg_text, interface_names: Sequence[str] = None):
-        if interface_names is None:  # None == "all"
+    def l2_send_text(self, msg_text, interface_names: Sequence[str] = None):  # TODO: RENAME THIS if we want to continue using for content other than pure text
+        if not interface_names:  # None == "all"
             interface_names = self.interface_names
 
         for interface_name in interface_names:
             self.fp.l2_send(msg_text, interface_name)
+
+    def l3_send_text(self, msg_text, dst_ip_str: str):
+        dst_ip = ip_address(dst_ip_str)
+        msg = NetworkMessage(content=msg_text, dest_ip=dst_ip)
+        egress_interface_names = [
+            interface_name for interface_name in self.interface_names
+            if self.fp.fib_lookup_validate(dst_ip, candidate=interface_name)
+        ]
+        if not egress_interface_names:
+            log.debug(f'dst_ip: {dst_ip_str} wasn\'t valid on any egress interfaces, rejecting')
+            return
+
+        for interface_name in egress_interface_names:
+            self.fp.l3_send(msg, specified_logical_interface_name=interface_name)
+        # self.fp.l3_send(msg, specified_logical_interface_name=e)
+        # self.l2_send_text(msg, interface_names=egress_interface_names)
 
 
 def start_cp(state):
@@ -116,7 +132,7 @@ def start_cp(state):
         log.info(f'looking up {dest} in fib: {repr(result)}')
 
 
-def listen(state):
+def listen(state, interface_name, filter_string):
     log.debug('entering listen()')
     loop = asyncio.get_event_loop()
     if state.ext_debug:
@@ -130,18 +146,28 @@ def listen(state):
     def cb(message):
         print(message)
 
-    cp.fp.register_interface_listener(
-        cb=cb,
-        logical_interface_name='E0',
-        msg_filter=lambda x: 'EST' in x.content
-    )
+
+    if interface_name:
+        interface_names = [interface_name]
+    else:
+        interface_names = cp.interface_names
+
+    if not filter_string:
+        filter_string = ''
+
+    for interface_name in interface_names:
+        cp.fp.register_interface_listener(
+            cb=cb,
+            msg_filter=lambda x: filter_string in x.content,
+            logical_interface_name=interface_name
+        )
 
     loop.create_task(utils._loop_timeout(state.timeout, loop))
     with utils.LoopExceptionHandler(loop):
         loop.run_forever()
 
 
-def pulsar(state, message):
+def l2_pulsar(state, message, interface_names):
     log.debug('entering pulsar()')
     loop = asyncio.get_event_loop()
     if state.ext_debug:
@@ -155,18 +181,45 @@ def pulsar(state, message):
 
     async def pulse(pulse_interval:int, msg_text, interface_names=None):
         while True:
-            log.debug('pulse() is about to sleep')
-            await asyncio.sleep(pulse_interval)
             log.debug('pulse() is about to send')
             cp.l2_send_text(msg_text, interface_names=interface_names)
             log.debug('pulse() sent')
+            log.debug('pulse() is about to sleep')
+            await asyncio.sleep(pulse_interval)
 
     log.debug('Creating pulsar task')
     loop.create_task(
-        pulse(3, message, ('E0', 'E2'))
+        pulse(3, message, interface_names)
     )
 
     with utils.LoopExceptionHandler(loop):
         loop.run_forever()
 
 
+def l3_pulsar(state, message, dst_ip):
+    log.debug('entering pulsar()')
+    loop = asyncio.get_event_loop()
+    if state.ext_debug:
+        loop.set_debug(enabled=True)
+
+    cp = ControlPlane()
+    with utils.LoopExceptionHandler(loop):
+        loop.run_until_complete(cp.async_init(state, loop))
+
+    loop.create_task(utils._loop_timeout(state.timeout, loop))
+
+    async def pulse(pulse_interval:int, msg_text):
+        while True:
+            log.debug('pulse() is about to send')
+            cp.l3_send_text(msg_text, dst_ip)
+            log.debug(f'pulse() sent to {dst_ip}')
+            log.debug('pulse() is about to sleep')
+            await asyncio.sleep(pulse_interval)
+
+    log.debug('Creating pulsar task')
+    loop.create_task(
+        pulse(3, message)
+    )
+
+    with utils.LoopExceptionHandler(loop):
+        loop.run_forever()

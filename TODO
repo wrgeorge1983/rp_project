@@ -25,7 +25,8 @@ Core Functionality - Forwarding Plane Processing Pipeline?:
     ☐ L3
       ☐ just enough IP to keep track of source/dest addresses, etc. @today @started(18-12-02 17:21)
         At layer 3, we can't just blindly accept an egress interface as-specified  We have to make sure it makes sense.
-        ☐ Destination: 
+        ☐ Destination: @today @today @today 
+          3 today tags means I *THINK* this is implemented????
           ☐ FIB lookup must match specified interface if any
           ☐ for link-local broadcast FIB lookup is the same, but we specify `dst_mac: 'FF:FF:FF:FF:FF:FF'`
           ☐ for reserved BC/MC addresses we must specify interface

@@ -249,16 +249,25 @@ def cp1_start(state):
 
 @cp1.command(name='listen')
 @cp1_options
+@click.option('-i', '--interface-name', 'interface_name', default=None)
+@click.option('--filter-string', default='')
 @pass_state
-def cp1_listen(state):
+def cp1_listen(state, interface_name, filter_string):
     common_state_ops(state)
-    control_plane_v1.listen(state)
+    control_plane_v1.listen(state, interface_name, filter_string)
 
 
 @cp1.command(name='pulsar')
 @cp1_options
 @click.option('-m', '--message', 'message', default='HELLO')
+@click.option('-L', '--layer', default=3, type=int)
+@click.option('-i', '--interface-name', 'interface_names', default=None, multiple=True)
+@click.option('-d', '--dest-ip', default='255.255.255.255')
 @pass_state
-def cp1_pulsar(state, message):
+def cp1_pulsar(state, message, layer, dest_ip, interface_names):
     common_state_ops(state)
-    control_plane_v1.pulsar(state, message)
+    if layer == 2:
+        control_plane_v1.l2_pulsar(state, message, interface_names)
+    elif layer == 3:
+        control_plane_v1.l3_pulsar(state, message, dest_ip)
+
