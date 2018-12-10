@@ -28,6 +28,7 @@ Core Functionality - Forwarding Plane Processing Pipeline?:
         ☐ Destination: @today @today @today 
           3 today tags means I *THINK* this is implemented????
           ☐ FIB lookup must match specified interface if any
+            Occurs in `ForwardingPlane.l2_encap()`
           ☐ for link-local broadcast FIB lookup is the same, but we specify `dst_mac: 'FF:FF:FF:FF:FF:FF'`
           ☐ for reserved BC/MC addresses we must specify interface
         ☐ unicast @started(18-12-02 17:21)

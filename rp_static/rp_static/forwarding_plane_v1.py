@@ -1,11 +1,11 @@
 """forwarding_plane_v1.py
 defines first version of forwarding plane implementation"""
 import asyncio
-from ipaddress import IPv4Network, IPv6Network
+from ipaddress import IPv4Network, IPv6Network, ip_address
 import logging
 log = logging.getLogger(__name__)
 from pprint import pformat
-from typing import Union, List
+from typing import Union, List, Tuple
 
 from rp_static import generic_l2 as l2
 from rp_static.messages import TransportMessage, NetworkMessage
@@ -51,7 +51,7 @@ class FIB:
         #     IPv4Network('10.1.8.0/24'): FIBNextHop('10.0.1.3')
         # }
 
-    def lookup(self, lookup_address: IPAddressType, recursive=False):
+    def lookup(self, lookup_address: IPAddressType, recursive=False) -> Tuple[Union[FIBNextHop, FIBEgressInterface], IPv4Network]:
         log.debug(f'FIB.lookup(): looking up {lookup_address} in FIB')
         longest_match: Union[None, IPv4Network] = None
         for dest in self.destinations:
@@ -62,9 +62,9 @@ class FIB:
         try:
             result = self.destinations[longest_match]
             if recursive and not isinstance(result, FIBEgressInterface):
-                result = self.lookup(result.address, recursive=True)
+                result, longest_match = self.lookup(result.address, recursive=True)
             log.debug(f'FIB.lookup(): got {result}')
-            return result
+            return result, longest_match
         except KeyError:
             log.debug(f'FIB.lookup(): no result!')
             raise ValueError(f'Unable to find {lookup_address} in FIB')
@@ -112,13 +112,14 @@ class ForwardingPlane:
     def add_fib_entries_from_interface_configs(self):
         self.fib.add_entries_from_interface_configs(self.interfaces)
 
-    def fib_lookup(self, lookup_address, recursive=False) -> Union[FIBNextHop, FIBEgressInterface]:
+    def fib_lookup(self, lookup_address, recursive=False) -> Tuple[Union[FIBNextHop, FIBEgressInterface], IPv4Network]:
         return self.fib.lookup(lookup_address, recursive)
 
     def fib_lookup_validate(self, lookup_address:IPAddressType, candidate:str):
         log.debug(f'ForwardingPlane.fib_lookup_validate(): checking {lookup_address} against {candidate}')
         try:
-            valid = self.fib_lookup(lookup_address, recursive=True).name == candidate
+            egress_interface, _ = self.fib_lookup(lookup_address, recursive=True)
+            valid = egress_interface.name == candidate
         except ValueError:
             valid = False
         if not valid:  # unicast lookup failed, check for BC/MC
@@ -143,7 +144,9 @@ class ForwardingPlane:
 
     async def process_config(self, topology_config, state, loop):
         self.tic = await self.config_rmq_instances_from_state(state, topology_config, loop)
+        self.l3_interfaces = [
 
+        ]
     @staticmethod
     async def config_rmq_instances_from_state(state, topology_config, loop):
         log.debug('entered ForwardingPlane.config_instances_from_state()')
@@ -204,7 +207,7 @@ class ForwardingPlane:
         # }
         content = l3_message.as_dict
         if egress_interface_name is None:
-            fib_egress_interface = self.fib_lookup(l3_message.dest_ip, recursive=True)
+            fib_egress_interface, _ = self.fib_lookup(l3_message.dest_ip, recursive=True)
             try:
                 egress_interface_name = fib_egress_interface.name
             except AttributeError:
