@@ -91,9 +91,15 @@ class ControlPlane:
         for interface_name in interface_names:
             self.fp.l2_send(msg_text, interface_name)
 
-    def l3_send_text(self, msg_text, dst_ip_str: str, specified_interface_name: str=None):
+    def l3_send_text(self, msg_text, dst_ip_str: str, src_ip_str: str, specified_interface_name: str=None):
         dst_ip = ip_address(dst_ip_str)
-        msg = NetworkMessage(content=msg_text, dest_ip=dst_ip)
+        if src_ip_str is not None:
+            src_ip = ip_address(src_ip_str)
+        else:
+            src_ip = None
+
+        msg = NetworkMessage(content=msg_text, dest_ip=dst_ip, src_ip=src_ip)
+
         valid_egress_interface_names = [
             interface_name for interface_name in self.interface_names
             if self.fp.fib_lookup_validate(dst_ip, candidate=interface_name)
@@ -208,7 +214,7 @@ def l2_pulsar(state, message, interface_names):
         loop.run_forever()
 
 
-def l3_pulsar(state, message, dst_ip, interface_names=None):
+def l3_pulsar(state, message, dst_ip, src_ip, interface_names=None):
     log.debug('entering pulsar()')
     loop = asyncio.get_event_loop()
     if state.ext_debug:
@@ -225,9 +231,9 @@ def l3_pulsar(state, message, dst_ip, interface_names=None):
             log.debug('pulse() is about to send')
             if interface_names:
                 for interface_name in interface_names:
-                    cp.l3_send_text(msg_text, dst_ip, specified_interface_name=interface_name)
+                    cp.l3_send_text(msg_text, dst_ip, src_ip, specified_interface_name=interface_name)
             else:
-                cp.l3_send_text(msg_text, dst_ip)
+                cp.l3_send_text(msg_text, dst_ip, src_ip)
             log.debug(f'pulse() sent to {dst_ip}.  Pulse() is about to sleep')
             await asyncio.sleep(pulse_interval)
 

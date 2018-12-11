@@ -22,21 +22,6 @@ Core Functionality - Transport Forwarding Plane (L1/L2):
   
 Core Functionality - Forwarding Plane Processing Pipeline?:
   ☐ Need to accept packets/frames/etc at one layer and process them through subsequent layers
-    ☐ L3
-      ☐ just enough IP to keep track of source/dest addresses, etc. @today @started(18-12-02 17:21)
-        At layer 3, we can't just blindly accept an egress interface as-specified  We have to make sure it makes sense.
-        ✔ Destination: @done(18-12-10 20:48)
-          ✔ FIB lookup must match specified interface if any @done(18-12-10 18:39)
-            Occurs in `ForwardingPlane.l2_encap()`
-          ✔ for link-local broadcast FIB lookup is the same, but we specify `dst_mac: 'FF:FF:FF:FF:FF:FF'` @done(18-12-10 20:48)
-          ✔ for reserved BC/MC addresses we must specify interface @done(18-12-10 20:48)
-            To be clear, this is a restriction at the L3/L2 interface.  If an application or protocol is smart enough to pick an interface for the user, it's fine
-        ☐ Source: @today @started(18-12-10 20:53)
-          ☐ We have to supply a source_ip at layer 3 @started(18-12-10 20:53)
-          
-        ☐ unicast @started(18-12-02 17:21)
-        ☐ broadcast @started(18-12-02 17:21)
-        ☐ multicast @started(18-12-02 17:21)
   ☐ Define listeners at different layers
 
 Core Functionality - Control Plane Layer 3/4:
@@ -96,6 +81,24 @@ Core Functionality - Management Plane: @low
   ☐ null
 
 Archive:
+  ✔ L3 @done(18-12-10 21:33) @project(Core Functionality - Forwarding Plane Processing Pipeline?)
+  ✔ just enough IP to keep track of source/dest addresses, etc. @started(18-12-02 17:21) @done(18-12-10 21:33) @lasted(1w1d4h12m19s) @project(Core Functionality - Forwarding Plane Processing Pipeline?)
+    At layer 3, we can't just blindly accept an egress interface as-specified  We have to make sure it makes sense.
+  ✔ Source: @started(18-12-10 20:53) @done(18-12-10 21:32) @lasted(39m52s) @project(Core Functionality - Forwarding Plane Processing Pipeline?)
+  ✔ We have to supply a source_ip by the time we're finished with layer 3 @started(18-12-10 20:53) @done(18-12-10 21:31) @lasted(38m54s) @project(Core Functionality - Forwarding Plane Processing Pipeline?)
+  ✔ We need to be able to lookup interface addresses: @done(18-12-10 21:32) @project(Core Functionality - Forwarding Plane Processing Pipeline?)
+  ✔ by interface name @done(18-12-10 21:32) @project(Core Functionality - Forwarding Plane Processing Pipeline?)
+  ✔ supplied by higher level protocol or user @done(18-12-10 21:32) @project(Core Functionality - Forwarding Plane Processing Pipeline?)
+  ✔ as part of a FIB lookup @done(18-12-10 21:32) @project(Core Functionality - Forwarding Plane Processing Pipeline?)
+  ✔ unicast @started(18-12-02 17:21) @done(18-12-10 21:32) @lasted(1w1d4h11m47s) @project(Core Functionality - Forwarding Plane Processing Pipeline?)
+  ✔ broadcast @started(18-12-02 17:21) @done(18-12-10 21:32) @lasted(1w1d4h11m47s) @project(Core Functionality - Forwarding Plane Processing Pipeline?)
+  ✔ multicast @started(18-12-02 17:21) @done(18-12-10 21:32) @lasted(1w1d4h11m47s) @project(Core Functionality - Forwarding Plane Processing Pipeline?)
+  ✔ Destination: @done(18-12-10 20:48) @project(Core Functionality - Forwarding Plane Processing Pipeline?)
+  ✔ FIB lookup must match specified interface if any @done(18-12-10 18:39) @project(Core Functionality - Forwarding Plane Processing Pipeline?)
+    Occurs in `ForwardingPlane.l2_encap()`
+  ✔ for link-local broadcast FIB lookup is the same, but we specify `dst_mac: 'FF:FF:FF:FF:FF:FF'` @done(18-12-10 20:48) @project(Core Functionality - Forwarding Plane Processing Pipeline?)
+  ✔ for reserved BC/MC addresses we must specify interface @done(18-12-10 20:48) @project(Core Functionality - Forwarding Plane Processing Pipeline?)
+    To be clear, this is a restriction at the L3/L2 interface.  If an application or protocol is smart enough to pick an interface for the user, it's fine
   ✔ Essential understanding of interfaces @done(18-12-02 10:12) @project(Core Functionality - Control Plane)
   ✔ send_text @done(18-12-02 10:12) @project(Core Functionality - Control Plane)
   ✔ L2 "send" method @done(18-12-02 10:11) @project(Core Functionality - Forwarding Plane Processing Pipeline?)

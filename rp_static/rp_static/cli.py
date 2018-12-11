@@ -263,11 +263,12 @@ def cp1_listen(state, interface_name, filter_string):
 @click.option('-L', '--layer', default=3, type=int)
 @click.option('-i', '--interface-name', 'interface_names', default=None, multiple=True)
 @click.option('-d', '--dest-ip', default='255.255.255.255')
+@click.option('-s', '--src-ip', default=None)
 @pass_state
-def cp1_pulsar(state, message, layer, dest_ip, interface_names):
+def cp1_pulsar(state, message, layer, dest_ip, interface_names, src_ip):
     common_state_ops(state)
     if layer == 2:
         control_plane_v1.l2_pulsar(state, message, interface_names)
     elif layer == 3:
-        control_plane_v1.l3_pulsar(state, message, dest_ip, interface_names)
+        control_plane_v1.l3_pulsar(state, message, dest_ip, src_ip, interface_names)
 

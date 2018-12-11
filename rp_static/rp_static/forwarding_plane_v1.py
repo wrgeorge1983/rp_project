@@ -136,10 +136,16 @@ class ForwardingPlane:
             except KeyError:
                 interface_mac = f'XX:{ic["name"]}'
                 log.error(f'Looking up the interface_name in the TIC failed!, falling back to dummy value of {interface_mac}')
-            ic['interface_mac'] = interface_mac
+            ic['config']['interface_mac'] = interface_mac
             self.interfaces.append(ic)
 
         self.add_fib_entries_from_interface_configs()
+
+    def lookup_interface_config_by_name(self, name):
+        try:
+            return [ic for ic in self.interfaces if ic['name'] == name][0]
+        except IndexError:
+            raise ValueError(f'ForwardingPlane.lookup_interface_config_by_name() Couldn\'t find {name}')
 
     def add_fib_entries_from_interface_configs(self):
         # This shouldn't ever be called more than once until/unless we add some logic around deduplication
@@ -173,15 +179,15 @@ class ForwardingPlane:
         self.loop.create_task(instance.send(msg))
 
     def l3_send(self, l3_msg, specified_logical_interface_name=None):
-
-        l2_msg = self.l2_encap(l3_msg, egress_interface_name=specified_logical_interface_name, )
+        l2_msg = self.l2_l3_encap(l3_msg, egress_interface_name=specified_logical_interface_name, )
         self.l2_send(l2_msg, logical_interface_name=specified_logical_interface_name)
 
     async def process_config(self, topology_config, state, loop):
         self.tic = await self.config_rmq_instances_from_state(state, topology_config, loop)
-        self.l3_interfaces = [
+        # self.l3_interfaces = [
+        #
+        # ]
 
-        ]
     @staticmethod
     async def config_rmq_instances_from_state(state, topology_config, loop):
         log.debug('entered ForwardingPlane.config_instances_from_state()')
@@ -231,12 +237,11 @@ class ForwardingPlane:
         cb = self._interface_listener_filter_callback(cb, msg_filter)
         self.loop.create_task(transport_instance.recv_w_callback(cb))
 
-    def l2_encap_lookups(self, dst_ip: IPAddressType, specified_src_mac=None,
-                         specified_dst_mac=None, specified_egress_interface_name=None):
+    def l2_l3_encap_lookups(self, dst_ip: IPAddressType, src_ip: IPAddressType=None, specified_src_mac=None,
+                            specified_dst_mac=None, specified_egress_interface_name=None):
 
         src_host = self.hostname
         dst_is_multicast = dst_ip.is_multicast
-
 
         try:
             fib_egress_interface, fib_longest_match = self.fib_lookup(dst_ip, recursive=True)
@@ -248,16 +253,18 @@ class ForwardingPlane:
                 raise e
 
         try:
-            egress_interface_config = [interface for interface in self.interfaces
-                                if interface['name'] == fib_egress_interface.name][0]
+            egress_interface_config = self.lookup_interface_config_by_name(fib_egress_interface.name)
         except IndexError:
             raise ValueError(f'ForwardingPlane.l2_encap_lookups() couldn\'t find {fib_egress_interface} '
                              f'in it\'s configured interfaces.')
 
+        if src_ip is None:
+            src_ip = egress_interface_config['config']['ipaddr']
+
         if specified_src_mac is not None:
             src_mac = specified_src_mac
         else:
-            src_mac = egress_interface_config['interface_mac']
+            src_mac = egress_interface_config['config']['interface_mac']
 
         if dst_ip == ip_address('255.255.255.255'):
             dst_is_broadcast = True
@@ -282,10 +289,11 @@ class ForwardingPlane:
             src_mac,
             dst_mac,
             fib_egress_interface,
-            src_host
+            src_host,
+            src_ip
         )
 
-    def l2_encap(self, l3_message:NetworkMessage, src_mac=None, dest_mac=None, egress_interface_name=None):
+    def l2_l3_encap(self, l3_message:NetworkMessage, src_mac=None, dest_mac=None, egress_interface_name=None):
         # l3_message.as_dict() = {
         #     'content': 'WE ARE HERE!',
         #     'dest_ip': '10.8.0.4',
@@ -295,12 +303,14 @@ class ForwardingPlane:
         # }
         l2_payload = l3_message.as_dict
 
-        src_mac, dest_mac, egress_interface, src_host = self.l2_encap_lookups(
+        src_mac, dest_mac, egress_interface, src_host, src_ip= self.l2_l3_encap_lookups(
             dst_ip=l2_payload['dest_ip'],
+            src_ip=l2_payload.get('src_ip'),
             specified_src_mac=src_mac,
             specified_dst_mac=dest_mac,
             specified_egress_interface_name=egress_interface_name
         )
+        l2_payload['src_ip'] = src_ip
 
         if egress_interface_name is None:
             try:
