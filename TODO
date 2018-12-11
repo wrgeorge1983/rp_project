@@ -8,18 +8,12 @@ Repo Health:
   ☐ Add a LICENSE file?
 
 Deployment Workflow:
-  ☐ topology_config parser more work
   ☐ null
 
 Other Ideas:
   ☐ cli `State` object:  override get_attr (or whatever) to have failed gets always return None?
   ☐ Decorator `@strict` that determines if a function/method can swallow & log a certain type of exception vs. hard failure
 
-Core Functionality - Transport Forwarding Plane (L1/L2):
-  ☐ Leak any information needed from topology file to router config as early as possible 
-    To preserve separation between the layers as much as possible
-    Best place to do this is probably in `utils.get_configs_by_hostname()`
-  
 Core Functionality - Forwarding Plane Processing Pipeline?:
   ☐ Need to accept packets/frames/etc at one layer and process them through subsequent layers
   ☐ Define listeners at different layers
@@ -32,13 +26,9 @@ Core Functionality - Control Plane Layer 3/4:
     ☐ connection state tracking
       ☐ New sessions outbound
       ☐ New sessions inbound
-  ☐ just enough IP to keep track of source/dest addresses, etc. @today
-    ☐ unicast
-    ☐ broadcast
-    ☐ multicast
 
 Core Functionality - Control Plane:
-  ☐ Basic receive methods @today 
+  ☐ Basic receive methods @low
     ☐ Based on interface address, etc
     ☐ validation, difference between unicast/multicat/etc
   ☐ Basic send methods
@@ -57,10 +47,8 @@ Core Functionality - Control Plane:
         ☐ rescind de-selected routes
     ☐ Lookups
     
-Core Functionality - Protocols - Mock Protocol v1.5: @today
-  ☐ Reimplement v1.0 on Forwarding Plane / Control Plane as appropriate
-
 Core Functionality - Protocols - Mock Protocol v2:
+  @low 
   ☐ Same as v1 but implemented at Layer 3
   ☐ Multicast???????
   ☐ or link-local broadcast????
@@ -69,7 +57,7 @@ Core Functionality - Protocols - RIP:
   ☐ RIPv2
   ☐ RIPv1 ????
 
-Core Functionality - Management Plane: @low
+Core Functionality - Management Plane: @high
   First iteration is the deployment workflow
   Further iteration is low priority until lack of mgmt plane is painful
   ☐ REST API 
@@ -77,10 +65,26 @@ Core Functionality - Management Plane: @low
     ☐ via message bus?  maybe? 
       ☐ dedicated queue for that purpose
         including associate logical interface?
+    ☐ Functionality:
+      ☐ null
+      ☐ shutdown command
+      ☐ route add command
+      ☐ take control of reading configs
+        ☐ reload config command
+      ☐ message send command
   ☐ CLI dependant upon REST API 
   ☐ null
 
 Archive:
+  ✘ topology_config parser more work @cancelled(18-12-10 22:04) @project(Deployment Workflow)
+  ✔ Leak any information needed from topology file to router config as early as possible @done(18-12-10 22:02) @project(Core Functionality - Transport Forwarding Plane (L1/L2))
+    To preserve separation between the layers as much as possible
+    Best place to do this is probably in `utils.get_configs_by_hostname()`
+  ✔ just enough IP to keep track of source/dest addresses, etc. @done(18-12-10 22:01) @project(Core Functionality - Control Plane Layer 3/4)
+  ✔ unicast @done(18-12-10 22:01) @project(Core Functionality - Control Plane Layer 3/4)
+  ✔ broadcast @done(18-12-10 22:01) @project(Core Functionality - Control Plane Layer 3/4)
+  ✔ multicast @done(18-12-10 22:01) @project(Core Functionality - Control Plane Layer 3/4)
+  ✘ Reimplement v1.0 on Forwarding Plane / Control Plane as appropriate @cancelled(18-12-10 22:00) @project(Core Functionality - Protocols - Mock Protocol v1.5)
   ✔ L3 @done(18-12-10 21:33) @project(Core Functionality - Forwarding Plane Processing Pipeline?)
   ✔ just enough IP to keep track of source/dest addresses, etc. @started(18-12-02 17:21) @done(18-12-10 21:33) @lasted(1w1d4h12m19s) @project(Core Functionality - Forwarding Plane Processing Pipeline?)
     At layer 3, we can't just blindly accept an egress interface as-specified  We have to make sure it makes sense.

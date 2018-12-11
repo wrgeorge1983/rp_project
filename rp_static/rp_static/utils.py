@@ -27,23 +27,23 @@ def get_configs(config_file, topology_file):
     }
 
 
-def get_configs_by_hostname(config_file_path, topology_file, hostname):
-    log.debug(f'entered get_configs_by_hostname()')
-    config_filename = f'{hostname}.config.yml'
-    log.debug(f'config_file_path: {config_file_path}; config_filename: {config_filename}')
-    full_config_filename = os.path.join(config_file_path, config_filename)
-    log.info(f'Using config file: {full_config_filename}')
-    with open(full_config_filename) as infil:
-        config = yaml.load(infil)
-
-    log.info(f'Using topology file: {topology_file.name}')
-    topology = yaml.load(topology_file)
-    log.debug(f'Got config: \n{yaml.dump(config)}')
-    log.debug(f'Got topology: \n{yaml.dump(topology)}')
-    return {
-        'router_config': config,
-        'topology': topology
-    }
+# def get_configs_by_hostname(config_file_path, topology_file, hostname):
+#     log.debug(f'entered get_configs_by_hostname()')
+#     config_filename = f'{hostname}.config.yml'
+#     log.debug(f'config_file_path: {config_file_path}; config_filename: {config_filename}')
+#     full_config_filename = os.path.join(config_file_path, config_filename)
+#     log.info(f'Using config file: {full_config_filename}')
+#     with open(full_config_filename) as infil:
+#         config = yaml.load(infil)
+#
+#     log.info(f'Using topology file: {topology_file.name}')
+#     topology = yaml.load(topology_file)
+#     log.debug(f'Got config: \n{yaml.dump(config)}')
+#     log.debug(f'Got topology: \n{yaml.dump(topology)}')
+#     return {
+#         'router_config': config,
+#         'topology': topology
+#     }
 
 
 async def async_get_configs_by_hostname(config_file_path, topology_filename, hostname):

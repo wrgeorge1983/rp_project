@@ -39,7 +39,6 @@ class ControlPlane:
         self.config = config
         self.interface_names = config['interface_names']
 
-
         # It is deeply improper for us to be reaching into this object to add the interface configs ourselves like this:
         # self.fp.interfaces = [
         #     {'name': key, 'config': self.process_interface_config(key, value)}
