@@ -8,6 +8,9 @@ from typing import Union, Dict, Sequence, List
 
 from rp_static.utils import IPAddressType
 
+import logging
+log = logging.getLogger(__name__)
+
 
 class MessageSerializer(json.JSONEncoder):
     @staticmethod
@@ -31,7 +34,11 @@ class BaseMessage:
 
     @property
     def as_json(self) -> str:
-        return json.dumps(self.as_dict, cls=MessageSerializer)
+        try:
+            return json.dumps(self.as_dict, cls=MessageSerializer)
+        except TypeError as e:
+            log.error(f'{type(self).__name__} couldn\'t serialize itself, because of something in it\'s content: {self.as_dict}')
+            raise e
 
     def __str__(self):
         return self.as_json

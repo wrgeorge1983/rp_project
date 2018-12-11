@@ -5,7 +5,7 @@ from ipaddress import IPv4Network, IPv6Network, ip_address
 import logging
 log = logging.getLogger(__name__)
 from pprint import pformat
-from typing import Union, List, Tuple
+from typing import Union, List, Tuple, Set
 
 from rp_static import generic_l2 as l2
 from rp_static.messages import TransportMessage, NetworkMessage
@@ -20,6 +20,9 @@ class FIBValue:
             return self.fib_id == other.fib_id
         except AttributeError:
             return self.fib_id == other
+
+    def __hash__(self):
+        return hash(self.fib_id)
 
     def __str__(self):
         return str(self.fib_id)
@@ -50,6 +53,7 @@ class FIB:
         #     # IPv4Network('10.0.1.0/24'): FIBEgressInterface('E1'),
         #     IPv4Network('10.1.8.0/24'): FIBNextHop('10.0.1.3')
         # }
+        self.fib_values: Set[FIBValue] = set()
 
     def lookup(self, lookup_address: IPAddressType, recursive=False) -> Tuple[Union[FIBNextHop, FIBEgressInterface], IPv4Network]:
         log.debug(f'FIB.lookup(): looking up {lookup_address} in FIB')
@@ -69,6 +73,13 @@ class FIB:
             log.debug(f'FIB.lookup(): no result!')
             raise ValueError(f'Unable to find {lookup_address} in FIB')
 
+    def lookup_by_name(self, name):
+        for value in self.fib_values:
+            if value.fib_id == name:
+                return value
+        log.debug(f'FIB lookup failed looking for {name} in {self.fib_values}')
+        raise ValueError(f'FIB.lookup_by_name() Couldn\'t find {name} in the FIB!')
+
     def add_entry(self, destination, value):
         if not isinstance(value, FIBValue):
             raise NotImplementedError(f'Can only add FIB values of type FIBValue, not {type(value)} like {value}')
@@ -77,6 +88,7 @@ class FIB:
             raise NotImplementedError(f'Can only add FIB destinations as IP Networks, not {type(destination)} like {destination}')
 
         self.destinations[destination] = value
+        self.fib_values.add(value)
 
     def add_entries_from_interface_configs(self, interface_configs):
         """FIB.add_entries_from_interface_configs()
@@ -109,7 +121,29 @@ class ForwardingPlane:
     def add_fib_entry(self, dest, value):
         self.fib.add_entry(dest, value)
 
+    def process_interface_configs(self, interface_configs: List[dict]):
+        # interface_configs are dicts file like this, derived from a config.yml:
+        # {
+        #     'name': 'E0',
+        #     'config': {
+        #         'ipaddr': IPv4Interface('10.0.1.1/24')
+        #     }
+        # }
+
+        for ic in interface_configs:
+            try:
+                interface_mac = f'{self.tic.get_instance_by_interface_name(ic["name"]).network_name}:{ic["name"]}'
+            except KeyError:
+                interface_mac = f'XX:{ic["name"]}'
+                log.error(f'Looking up the interface_name in the TIC failed!, falling back to dummy value of {interface_mac}')
+            ic['interface_mac'] = interface_mac
+            self.interfaces.append(ic)
+
+        self.add_fib_entries_from_interface_configs()
+
     def add_fib_entries_from_interface_configs(self):
+        # This shouldn't ever be called more than once until/unless we add some logic around deduplication
+        # The hint is that we're "adding", but we're passing *all* of the interfaces each time
         self.fib.add_entries_from_interface_configs(self.interfaces)
 
     def fib_lookup(self, lookup_address, recursive=False) -> Tuple[Union[FIBNextHop, FIBEgressInterface], IPv4Network]:
@@ -139,6 +173,7 @@ class ForwardingPlane:
         self.loop.create_task(instance.send(msg))
 
     def l3_send(self, l3_msg, specified_logical_interface_name=None):
+
         l2_msg = self.l2_encap(l3_msg, egress_interface_name=specified_logical_interface_name, )
         self.l2_send(l2_msg, logical_interface_name=specified_logical_interface_name)
 
@@ -194,8 +229,61 @@ class ForwardingPlane:
             msg_filter = lambda x: True
 
         cb = self._interface_listener_filter_callback(cb, msg_filter)
-
         self.loop.create_task(transport_instance.recv_w_callback(cb))
+
+    def l2_encap_lookups(self, dst_ip: IPAddressType, specified_src_mac=None,
+                         specified_dst_mac=None, specified_egress_interface_name=None):
+
+        src_host = self.hostname
+        dst_is_multicast = dst_ip.is_multicast
+
+
+        try:
+            fib_egress_interface, fib_longest_match = self.fib_lookup(dst_ip, recursive=True)
+        except ValueError as e:
+            if dst_is_multicast:  # it's okay that lookup failed because this is multicast
+                fib_egress_interface = self.fib.lookup_by_name(specified_egress_interface_name)
+                fib_longest_match = IPv4Network('224.0.0.0/4')
+            else:
+                raise e
+
+        try:
+            egress_interface_config = [interface for interface in self.interfaces
+                                if interface['name'] == fib_egress_interface.name][0]
+        except IndexError:
+            raise ValueError(f'ForwardingPlane.l2_encap_lookups() couldn\'t find {fib_egress_interface} '
+                             f'in it\'s configured interfaces.')
+
+        if specified_src_mac is not None:
+            src_mac = specified_src_mac
+        else:
+            src_mac = egress_interface_config['interface_mac']
+
+        if dst_ip == ip_address('255.255.255.255'):
+            dst_is_broadcast = True
+        elif dst_ip == fib_longest_match.broadcast_address:
+            dst_is_broadcast = True
+        else:
+            dst_is_broadcast = False
+
+        if (dst_is_multicast or dst_is_broadcast) and specified_egress_interface_name is None:
+            raise ValueError('Must specify egress interface for broadcast or multicast packets!')
+
+        log.debug(f'l2_encap_lookups() found _is_broadcast and _is_multicast to be: {dst_is_broadcast, dst_is_multicast}')
+
+        if specified_dst_mac is not None:
+            dst_mac = specified_dst_mac
+        elif dst_is_broadcast or dst_is_multicast:
+            dst_mac = 'FF:FF:FF:FF:FF:FF'
+        else:
+            dst_mac = None
+
+        return (
+            src_mac,
+            dst_mac,
+            fib_egress_interface,
+            src_host
+        )
 
     def l2_encap(self, l3_message:NetworkMessage, src_mac=None, dest_mac=None, egress_interface_name=None):
         # l3_message.as_dict() = {
@@ -205,18 +293,25 @@ class ForwardingPlane:
         #     'egress_interface': None,
         #     'proto_number': 8
         # }
-        content = l3_message.as_dict
+        l2_payload = l3_message.as_dict
+
+        src_mac, dest_mac, egress_interface, src_host = self.l2_encap_lookups(
+            dst_ip=l2_payload['dest_ip'],
+            specified_src_mac=src_mac,
+            specified_dst_mac=dest_mac,
+            specified_egress_interface_name=egress_interface_name
+        )
+
         if egress_interface_name is None:
-            fib_egress_interface, _ = self.fib_lookup(l3_message.dest_ip, recursive=True)
             try:
-                egress_interface_name = fib_egress_interface.name
+                egress_interface_name = egress_interface.name
             except AttributeError:
-                raise ValueError(f'FIB lookup for {l3_message.dest_ip} returned {fib_egress_interface} of type '
-                                 f'{type(fib_egress_interface)} instead of a valid FIBEgressInterface Object')
+                raise ValueError(f'FIB lookup for {l3_message.dest_ip} returned {egress_interface} of type '
+                                 f'{type(egress_interface)} instead of a valid FIBEgressInterface Object')
 
-        src_mac = src_mac if src_mac is not None else f'{self.hostname}:{egress_interface_name}'
+        # src_mac = src_mac if src_mac is not None else f'{self.hostname}:{egress_interface_name}'
 
-        l2_message = TransportMessage(content=content, egress_interface=egress_interface_name,
+        l2_message = TransportMessage(content=l2_payload, egress_interface=egress_interface_name,
                                       src_mac=src_mac, dst_mac=dest_mac, source_host=self.hostname)
 
         return l2_message

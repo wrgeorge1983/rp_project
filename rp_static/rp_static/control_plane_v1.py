@@ -39,10 +39,16 @@ class ControlPlane:
         self.config = config
         self.interface_names = config['interface_names']
 
-        self.fp.interfaces = [
+
+        # It is deeply improper for us to be reaching into this object to add the interface configs ourselves like this:
+        # self.fp.interfaces = [
+        #     {'name': key, 'config': self.process_interface_config(key, value)}
+        #      for key, value in config['interfaces'].items()
+        # ]
+        self.fp.process_interface_configs([
             {'name': key, 'config': self.process_interface_config(key, value)}
              for key, value in config['interfaces'].items()
-        ]
+        ])
         self.fp.add_fib_entries_from_interface_configs()
 
         try:
@@ -85,18 +91,24 @@ class ControlPlane:
         for interface_name in interface_names:
             self.fp.l2_send(msg_text, interface_name)
 
-    def l3_send_text(self, msg_text, dst_ip_str: str):
+    def l3_send_text(self, msg_text, dst_ip_str: str, specified_interface_name: str=None):
         dst_ip = ip_address(dst_ip_str)
         msg = NetworkMessage(content=msg_text, dest_ip=dst_ip)
-        egress_interface_names = [
+        valid_egress_interface_names = [
             interface_name for interface_name in self.interface_names
             if self.fp.fib_lookup_validate(dst_ip, candidate=interface_name)
         ]
-        if not egress_interface_names:
-            log.debug(f'dst_ip: {dst_ip_str} wasn\'t valid on any egress interfaces, rejecting')
+        if not valid_egress_interface_names:
+            log.error(f'dst_ip: {dst_ip_str} wasn\'t valid on any egress interfaces, rejecting')
             return
+        if specified_interface_name is not None:
+            if specified_interface_name in valid_egress_interface_names:
+                valid_egress_interface_names = [specified_interface_name]
+            else:
+                log.error(f'{specified_interface_name} isn\'t a valid egress_interface for {dst_ip_str}')
+                return
 
-        for interface_name in egress_interface_names:
+        for interface_name in valid_egress_interface_names:
             self.fp.l3_send(msg, specified_logical_interface_name=interface_name)
         # self.fp.l3_send(msg, specified_logical_interface_name=e)
         # self.l2_send_text(msg, interface_names=egress_interface_names)
@@ -196,7 +208,7 @@ def l2_pulsar(state, message, interface_names):
         loop.run_forever()
 
 
-def l3_pulsar(state, message, dst_ip):
+def l3_pulsar(state, message, dst_ip, interface_names=None):
     log.debug('entering pulsar()')
     loop = asyncio.get_event_loop()
     if state.ext_debug:
@@ -208,17 +220,20 @@ def l3_pulsar(state, message, dst_ip):
 
     loop.create_task(utils._loop_timeout(state.timeout, loop))
 
-    async def pulse(pulse_interval:int, msg_text):
+    async def pulse(pulse_interval:int, msg_text, interface_names):
         while True:
             log.debug('pulse() is about to send')
-            cp.l3_send_text(msg_text, dst_ip)
-            log.debug(f'pulse() sent to {dst_ip}')
-            log.debug('pulse() is about to sleep')
+            if interface_names:
+                for interface_name in interface_names:
+                    cp.l3_send_text(msg_text, dst_ip, specified_interface_name=interface_name)
+            else:
+                cp.l3_send_text(msg_text, dst_ip)
+            log.debug(f'pulse() sent to {dst_ip}.  Pulse() is about to sleep')
             await asyncio.sleep(pulse_interval)
 
     log.debug('Creating pulsar task')
     loop.create_task(
-        pulse(3, message)
+        pulse(3, message, interface_names)
     )
 
     with utils.LoopExceptionHandler(loop):

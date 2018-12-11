@@ -269,5 +269,5 @@ def cp1_pulsar(state, message, layer, dest_ip, interface_names):
     if layer == 2:
         control_plane_v1.l2_pulsar(state, message, interface_names)
     elif layer == 3:
-        control_plane_v1.l3_pulsar(state, message, dest_ip)
+        control_plane_v1.l3_pulsar(state, message, dest_ip, interface_names)
 
